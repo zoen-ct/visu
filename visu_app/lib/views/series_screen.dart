@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '/visu.dart';
 
@@ -90,6 +91,10 @@ class _SeriesScreenState extends State<SeriesScreen>
     }
   }
 
+  void _navigateToSerieDetail(BuildContext context, Serie serie) {
+    context.push('/series/detail/${serie.id}');
+  }
+
   Widget _buildWatchlistTab() {
     if (_isLoadingWatchlist) {
       return const Center(
@@ -141,15 +146,7 @@ class _SeriesScreenState extends State<SeriesScreen>
           final serie = _watchlist![index];
           return SerieCard(
             serie: serie,
-            onTap: () {
-              // Navigation vers la page de détails (à implémenter)
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Détails de ${serie.title}'),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
-            },
+            onTap: () => _navigateToSerieDetail(context, serie),
           );
         },
       ),
@@ -207,15 +204,7 @@ class _SeriesScreenState extends State<SeriesScreen>
           final serie = _upcoming![index];
           return SerieCard(
             serie: serie,
-            onTap: () {
-                // Navigate to details page (to be implemented)
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Détails de ${serie.title}'),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
-            },
+            onTap: () => _navigateToSerieDetail(context, serie),
           );
         },
       ),

@@ -15,6 +15,7 @@ class AppRouter {
     redirect: _handleRedirect,
     routes: [
       GoRoute(path: '/', redirect: (_, __) => '/series'),
+
       ShellRoute(
         builder: (context, state, child) {
           int currentIndex;
@@ -38,6 +39,16 @@ class AppRouter {
           GoRoute(
             path: '/series',
             builder: (context, state) => const SeriesScreen(),
+            routes: [
+              GoRoute(
+                path: 'detail/:id',
+                builder: (context, state) {
+                  final id =
+                      int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+                  return SerieDetailScreen(serieId: id);
+                },
+              ),
+            ],
           ),
 
           GoRoute(
@@ -95,7 +106,6 @@ class AppRouter {
   }
 }
 
-/// Utility class to notify the router of authentication state changes
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(this._authService) {
     _authService.authStateChanges.listen((_) {

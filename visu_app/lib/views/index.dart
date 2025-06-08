@@ -4,4 +4,5 @@ export 'main_screen.dart';
 export 'movies_screen.dart';
 export 'profile_screen.dart';
 export 'search_screen.dart';
+export 'serie_detail_screen.dart';
 export 'series_screen.dart';

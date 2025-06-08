@@ -1,4 +1,4 @@
-import '/visu.dart';
+import 'package:visu/models/serie.dart';
 
 class SerieService {
   Future<List<Serie>> getWatchlist() async {
@@ -6,59 +6,59 @@ class SerieService {
 
     return [
       Serie(
-        id: 1,
-        title: 'The Last of Us',
-        imageUrl:
-            'https://fr.web.img6.acsta.net/pictures/22/11/02/15/37/0544148.jpg',
-        rating: 8.7,
-        releaseDate: '15 janvier 2023',
-        description:
-            'Vingt ans après la destruction de la civilisation moderne, Joel, un survivant aguerri, est engagé pour faire sortir Ellie, une jeune fille de 14 ans, d\'une zone de quarantaine oppressante.',
-        genres: ['Drame', 'Action', 'Aventure'],
-      ),
-      Serie(
-        id: 2,
+        id: 1396,
         title: 'Breaking Bad',
         imageUrl:
-            'https://m.media-amazon.com/images/I/61oZBZ+iewL._AC_UF894,1000_QL80_.jpg',
-        rating: 9.5,
-        releaseDate: '20 janvier 2008',
+            'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
+        rating: 8.5,
+        releaseDate: '2008-01-20',
         description:
-            'Un professeur de chimie atteint d\'un cancer devient fabricant et vendeur de méthamphétamine pour assurer l\'avenir financier de sa famille.',
-        genres: ['Drame', 'Crime', 'Thriller'],
+            'Walter White, professeur de chimie dans un lycée, devient fabricant de méthamphétamine après avoir appris qu\'il est atteint d\'un cancer du poumon en phase terminale.',
+        genres: ['Drame', 'Crime'],
       ),
       Serie(
-        id: 3,
+        id: 1399,
         title: 'Game of Thrones',
         imageUrl:
-            'https://m.media-amazon.com/images/I/91DjGXn-0nL._AC_UF894,1000_QL80_.jpg',
-        rating: 9.2,
-        releaseDate: '17 avril 2011',
+            'https://image.tmdb.org/t/p/w500/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg',
+        rating: 8.3,
+        releaseDate: '2011-04-17',
         description:
-            'Neuf familles nobles rivalisent pour le contrôle du Trône de Fer dans les sept royaumes de Westeros.',
-        genres: ['Drame', 'Fantastique', 'Aventure'],
+            'Sur le continent de Westeros, le roi Robert Baratheon gouverne le Royaume des Sept Couronnes depuis plus de dix-sept ans, à la suite de la rébellion qu\'il a menée contre le roi fou, Aerys II Targaryen.',
+        genres: ['Drame', 'Fantastique', 'Action & Aventure'],
       ),
       Serie(
-        id: 4,
+        id: 66732,
         title: 'Stranger Things',
         imageUrl:
-            'https://m.media-amazon.com/images/I/715PNtTCl7L._AC_UF894,1000_QL80_.jpg',
-        rating: 8.7,
-        releaseDate: '15 juillet 2016',
+            'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',
+        rating: 8.6,
+        releaseDate: '2016-07-15',
         description:
-            'Quand un jeune garçon disparaît, une petite ville découvre une affaire mystérieuse, des expériences secrètes, des forces surnaturelles terrifiantes et une étrange petite fille.',
-        genres: ['Drame', 'Fantastique', 'Horreur'],
+            'À Hawkins, dans l\'Indiana, en 1983. Lorsque Will Byers disparaît de son domicile, ses amis se lancent dans une recherche pour le retrouver. Dans leur quête de réponses, ils rencontrent une étrange jeune fille en fuite.',
+        genres: ['Drame', 'Fantastique', 'Mystère'],
       ),
       Serie(
-        id: 5,
-        title: 'The Mandalorian',
+        id: 60735,
+        title: 'The Flash',
         imageUrl:
-            'https://m.media-amazon.com/images/I/81RnrCuPjqL._AC_UF894,1000_QL80_.jpg',
-        rating: 8.7,
-        releaseDate: '12 novembre 2019',
+            'https://image.tmdb.org/t/p/w500/lJA2RCMfsWoskqlQhXPSLFQGXEJ.jpg',
+        rating: 7.7,
+        releaseDate: '2014-10-07',
         description:
-            'Après la chute de l\'Empire, un chasseur de primes solitaire voyage aux confins de la galaxie, loin de l\'autorité de la Nouvelle République.',
-        genres: ['Action', 'Aventure', 'Science-Fiction'],
+            'Neuf mois après avoir été frappé par la foudre, Barry Allen se réveille d\'un coma et découvre qu\'il a le pouvoir de se déplacer à une vitesse surhumaine.',
+        genres: ['Drame', 'Science-Fiction', 'Fantastique'],
+      ),
+      Serie(
+        id: 1416,
+        title: 'Grey\'s Anatomy',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/clnyhPqj1SNgpAdeSS6a6fwE6Bo.jpg',
+        rating: 8.2,
+        releaseDate: '2005-03-27',
+        description:
+            'Meredith Grey, fille d\'un chirurgien très réputé, commence son internat de première année en médecine chirurgicale dans un hôpital de Seattle.',
+        genres: ['Drame'],
       ),
     ];
   }
@@ -68,60 +68,135 @@ class SerieService {
 
     return [
       Serie(
-        id: 6,
-        title: 'House of the Dragon - Saison 2',
+        id: 84958,
+        title: 'Loki (Saison 2)',
         imageUrl:
-            'https://m.media-amazon.com/images/I/81ucYvfZ4KL._AC_UF894,1000_QL80_.jpg',
-        rating: 8.5,
-        releaseDate: '16 juin 2025',
+            'https://image.tmdb.org/t/p/w500/voHUmluYmKyleFkTu3lO1wC8lYq.jpg',
+        rating: 8.2,
+        releaseDate: '2023-10-05',
         description:
-            'La saison 2 continue de raconter l\'histoire de la maison Targaryen, 200 ans avant les événements de Game of Thrones.',
+            'Après avoir volé le Tesseract pendant les événements d\'Avengers: Endgame, une version alternative de Loki est amenée à la mystérieuse Time Variance Authority.',
+        genres: ['Science-Fiction', 'Fantastique', 'Action & Aventure'],
+      ),
+      Serie(
+        id: 94605,
+        title: 'Arcane (Saison 2)',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg',
+        rating: 9.1,
+        releaseDate: '2023-11-18',
+        description:
+            'Au milieu du conflit entre les villes jumelles de Piltover et Zaun, deux sœurs se battent dans des camps opposés.',
+        genres: ['Animation', 'Science-Fiction', 'Action & Aventure', 'Drame'],
+      ),
+      Serie(
+        id: 76479,
+        title: 'The Boys (Saison 4)',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/stTEycfG9928HYGEISBFaG1ngjM.jpg',
+        rating: 8.4,
+        releaseDate: '2023-09-22',
+        description:
+            'Dans un monde où les super-héros sont corrompus et gérés par une puissante corporation, un groupe de justiciers s\'unissent pour les combattre.',
+        genres: ['Science-Fiction', 'Action & Aventure', 'Drame'],
+      ),
+      Serie(
+        id: 71912,
+        title: 'The Witcher (Saison 3)',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/cZ0d3rtvXPVvuiX22sP79K3Hmvt.jpg',
+        rating: 8.0,
+        releaseDate: '2023-07-27',
+        description:
+            'Le sorceleur Geralt, un chasseur de monstres, se bat pour trouver sa place dans un monde où les humains se révèlent souvent plus vicieux que les bêtes.',
+        genres: ['Drame', 'Fantastique', 'Action & Aventure'],
+      ),
+      Serie(
+        id: 63174,
+        title: 'Lucifer (Final)',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/ekZobS8isE6mA53RAiGDG93hBxL.jpg',
+        rating: 8.5,
+        releaseDate: '2023-12-15',
+        description:
+            'Lassé d\'être le Seigneur des Enfers, le diable s\'installe à Los Angeles où il ouvre un nightclub et se lie avec une policière.',
+        genres: ['Crime', 'Science-Fiction', 'Fantastique'],
+      ),
+    ];
+  }
+
+  Future<List<Serie>> getPopularSeries() async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    return [
+      Serie(
+        id: 1,
+        title: 'Stranger Things',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg',
+        rating: 8.6,
+        releaseDate: '2016-07-15',
+        description:
+            'Quand un jeune garçon disparaît, une petite ville découvre une affaire mystérieuse, des expériences secrètes, des forces surnaturelles terrifiantes... et une fillette.',
+        genres: ['Drame', 'Fantastique', 'Mystère'],
+      ),
+      Serie(
+        id: 2,
+        title: 'The Witcher',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/7vjaCdMw15FEbXyLQTVa04URsPm.jpg',
+        rating: 8.2,
+        releaseDate: '2019-12-20',
+        description:
+            'Geralt de Riv, un chasseur de monstres mutant, poursuit son destin dans un monde chaotique où les humains sont souvent plus vicieux que les bêtes.',
+        genres: ['Action', 'Aventure', 'Drame'],
+      ),
+      Serie(
+        id: 3,
+        title: 'Breaking Bad',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg',
+        rating: 8.8,
+        releaseDate: '2008-01-20',
+        description:
+            'Un professeur de chimie atteint d\'un cancer s\'associe à un ancien élève pour fabriquer et vendre de la méthamphétamine afin d\'assurer l\'avenir financier de sa famille.',
+        genres: ['Drame', 'Crime', 'Thriller'],
+      ),
+      Serie(
+        id: 4,
+        title: 'Game of Thrones',
+        imageUrl:
+            'https://image.tmdb.org/t/p/w500/u3bZgnGQ9T01sWNhyveQz0wH0Hl.jpg',
+        rating: 8.4,
+        releaseDate: '2011-04-17',
+        description:
+            'Neuf familles nobles rivalisent pour le contrôle du Trône de Fer dans les sept royaumes de Westeros.',
         genres: ['Drame', 'Fantastique', 'Action'],
       ),
       Serie(
-        id: 7,
-        title: 'The Penguin',
+        id: 5,
+        title: 'The Crown',
         imageUrl:
-            'https://upload.wikimedia.org/wikipedia/en/9/91/The_Penguin_%28TV_series%29_logo.jpg',
-        rating: 8.2,
-        releaseDate: '1 juillet 2025',
+            'https://image.tmdb.org/t/p/w500/5aUP5gFrG5hXeKnhNHj4C7QjIDg.jpg',
+        rating: 8.1,
+        releaseDate: '2016-11-04',
         description:
-            'Une série dérivée du film The Batman qui se concentre sur le personnage du Pingouin et son ascension dans le monde criminel de Gotham.',
-        genres: ['Crime', 'Drame', 'Action'],
-      ),
-      Serie(
-        id: 8,
-        title: 'The Lord of the Rings: The Rings of Power - Saison 2',
-        imageUrl:
-            'https://m.media-amazon.com/images/I/71VzL2xO13L._AC_UF894,1000_QL80_.jpg',
-        rating: 7.5,
-        releaseDate: '29 août 2025',
-        description:
-            'Des milliers d\'années avant les événements du Hobbit et du Seigneur des Anneaux, cette épopée dramatique suit un casting de personnages confrontés à la réapparition du mal en Terre du Milieu.',
-        genres: ['Fantastique', 'Aventure', 'Drame'],
-      ),
-      Serie(
-        id: 9,
-        title: 'Dune: Prophecy',
-        imageUrl:
-            'https://cdn.vox-cdn.com/uploads/chorus_asset/file/24626606/dune_prophecy_bene_gesserit_hbo.jpg',
-        rating: 8.9,
-        releaseDate: '15 septembre 2025',
-        description:
-            'Préquelle de Dune qui explore l\'univers de Frank Herbert à travers les yeux d\'un ordre mystérieux de femmes connu sous le nom de Bene Gesserit.',
-        genres: ['Science-Fiction', 'Drame', 'Aventure'],
-      ),
-      Serie(
-        id: 10,
-        title: 'The Last of Us - Saison 2',
-        imageUrl:
-            'https://media.gq-magazine.co.uk/photos/6423b2b0d432fee4a15f2f0a/16:9/w_2560%2Cc_limit/EDIT_The-Last-of-Us-Season-2-what-we-know-1366-1366.jpg',
-        rating: 9.0,
-        releaseDate: '20 octobre 2025',
-        description:
-            'La suite des aventures de Joel et Ellie dans un monde post-apocalyptique, basée sur le jeu vidéo The Last of Us Part II.',
-        genres: ['Drame', 'Action', 'Horreur'],
+            'La série se concentre sur la reine Élisabeth II, alors âgée de 25 ans et confrontée à la tâche ardue de diriger la plus célèbre monarchie du monde tout en forgeant une relation avec le Premier ministre britannique Sir Winston Churchill.',
+        genres: ['Drame', 'Histoire', 'Biographie'],
       ),
     ];
+  }
+
+  Future<List<Serie>> searchSeries(String query) async {
+    await Future.delayed(const Duration(seconds: 1));
+
+    final allSeries = await getPopularSeries();
+    if (query.isEmpty) return allSeries;
+
+    return allSeries
+        .where(
+          (serie) => serie.title.toLowerCase().contains(query.toLowerCase()),
+        )
+        .toList();
   }
 }
