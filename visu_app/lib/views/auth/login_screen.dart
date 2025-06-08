@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:visu/visu.dart';
+import 'package:go_router/go_router.dart';
+
+import '/visu.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -24,7 +26,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    // Validation du formulaire
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -46,14 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         });
 
         if (success) {
-          // Navigation vers l'écran principal après connexion réussie
-          // TODO: Implémenter la navigation vers l'écran principal
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Connexion réussie !'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          // Redirection will be handled by go_router
         } else {
           setState(() {
             _errorMessage = 'Email ou mot de passe incorrect';
@@ -95,7 +89,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'Visu',
+                          'Vizu',
                           style: TextStyle(
                             color: Color(0xFFF8C13A),
                             fontSize: 32,
@@ -118,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 40),
 
-                    // Form title
+                  // Form title
                   const Text(
                     'Connexion',
                     style: TextStyle(
@@ -131,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                    // Email field
+                  // Email field
                   VisuTextField(
                     label: 'Email',
                     controller: _emailController,
@@ -152,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 16),
 
-                    // Password field
+                  // Password field
                   VisuTextField(
                     label: 'Mot de passe',
                     controller: _passwordController,
@@ -171,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 8),
 
-                    // Forgot password link
+                  // Forgot password link
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -191,12 +185,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 8),
 
-                    // Error message
+                  // Error message
                   if (_errorMessage != null) ...[
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -219,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                    // Login button
+                  // Login button
                   VisuButton(
                     text: 'Se connecter',
                     isLoading: _isLoading,
@@ -229,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 24),
 
-                    // Sign up link
+                  // Registration link
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -243,9 +237,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            // TODO: Naviguer vers la page d'inscription
-                          },
+                          onPressed: () => context.go('/register'),
                           child: const Text(
                             'S\'inscrire',
                             style: TextStyle(
