@@ -1,6 +1,6 @@
-GitHub Copilot - Guide de style et de contexte pour Vizu
+GitHub Copilot - Guide de style et de contexte pour Visu
 Contexte du projet
-Nom de l'application : Vizu
+Nom de l'application : Visu
 
 Type : Application mobile Flutter
 
@@ -178,4 +178,6 @@ EpisodeTile
 
 FavoriteButton
 
-VizuSearchField
+VisuSearchField
+
+Si des commentaires sont mis, ils doivent impérativement être en anglais

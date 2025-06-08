@@ -1,4 +1,4 @@
-# 📱 Application Vizu – Schémas UML
+# 📱 Application Visu – Schémas UML
 
 ---
 
