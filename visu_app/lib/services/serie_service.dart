@@ -1,4 +1,4 @@
-import 'package:visu/models/serie.dart';
+import '/visu.dart';
 
 class SerieService {
   Future<List<Serie>> getWatchlist() async {

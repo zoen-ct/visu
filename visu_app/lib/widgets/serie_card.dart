@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:visu/models/serie.dart';
+
+import '/visu.dart';
 
 class SerieCard extends StatelessWidget {
 

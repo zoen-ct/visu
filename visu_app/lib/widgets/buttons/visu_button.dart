@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 
 class VisuButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-  final bool isLoading;
-  final IconData? icon;
 
   const VisuButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
     this.icon,
-  }) : super(key: key);
+  });
+  
+  final String text;
+  final VoidCallback onPressed;
+  final bool isLoading;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
