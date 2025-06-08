@@ -1,28 +1,62 @@
-# This file configures the analyzer, which statically analyzes Dart code to
-# check for errors, warnings, and lints.
-#
-# The issues identified by the analyzer are surfaced in the UI of Dart-enabled
-# IDEs (https://dart.dev/tools#ides-and-editors). The analyzer can also be
-# invoked from the command line by running `flutter analyze`.
-
-# The following line activates a set of recommended lints for Flutter apps,
-# packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
-linter:
-  # The lint rules applied to this project can be customized in the
-  # section below to disable rules from the `package:flutter_lints/flutter.yaml`
-  # included above or to enable additional rules. A list of all available lints
-  # and their documentation is published at https://dart.dev/lints.
-  #
-  # Instead of disabling a lint rule for the entire project in the
-  # section below, it can also be suppressed for a single line of code
-  # or a specific dart file by using the `// ignore: name_of_lint` and
-  # `// ignore_for_file: name_of_lint` syntax on the line or in the file
-  # producing the lint.
-  rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+analyzer:
+  exclude:
+    - build/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+  plugins:
+    - custom_lint
+
+linter:
+  rules:
+    # Code style
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    avoid_unnecessary_containers: true
+    unnecessary_this: true
+    prefer_final_locals: true
+    prefer_single_quotes: true
+    require_trailing_commas: true
+    sort_constructors_first: true
+    always_declare_return_types: true
+    avoid_print: true
+    prefer_final_in_for_each: true
+    avoid_empty_else: true
+    file_names: true
+    constant_identifier_names: false
+
+    # Readability
+    sized_box_for_whitespace: true
+    use_key_in_widget_constructors: true
+    avoid_returning_null: true
+    prefer_interpolation_to_compose_strings: true
+    lines_longer_than_80_chars: false
+    omit_local_variable_types: false
+
+    # Errors & safety
+    avoid_dynamic_calls: true
+    avoid_types_as_parameter_names: true
+    no_leading_underscores_for_local_identifiers: true
+    prefer_typing_uninitialized_variables: true
+    unnecessary_null_checks: true
+
+    # Recommended naming
+    camel_case_types: true
+    non_constant_identifier_names: true
+
+dart_code_metrics:
+  metrics:
+    cyclomatic-complexity: 20
+    number-of-parameters: 4
+    source-lines-of-code: 150
+    maximum-nesting-level: 5
+    technical-debt: 20
+
+  rules:
+    - member-ordering
+    - always-remove-listener
+    - avoid-global-state
+    - avoid-non-null-assertion
+    - avoid-unnecessary-setstate
