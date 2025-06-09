@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '/visu.dart';
 
 class SerieDetailScreen extends StatefulWidget {
-
   const SerieDetailScreen({super.key, required this.serieId});
   final int serieId;
 
@@ -52,7 +51,9 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
       });
 
       final detailsJson = await _tmdbService.getTvShowDetails(widget.serieId);
-      final details = TvShowDetails.fromJson(detailsJson as Map<String, dynamic>);
+      final details = TvShowDetails.fromJson(
+        detailsJson as Map<String, dynamic>,
+      );
 
       if (mounted) {
         setState(() {
@@ -402,16 +403,15 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                   ),
                 ),
               ],
-              // Ici, nous pourrions charger la liste des épisodes pour chaque saison
-              // Mais pour éviter de surcharger l'API, nous affichons juste un message
-              const Text(
-                'Appuyez pour voir les épisodes',
-                style: TextStyle(
-                  color: Color(0xFFF8C13A),
-                  fontSize: 14,
-                  fontStyle: FontStyle.italic,
+              // Bouton pour charger les épisodes
+              ElevatedButton(
+                onPressed: () => _loadEpisodes(season.seasonNumber),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF8C13A),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                textAlign: TextAlign.center,
+                child: const Text('Voir les épisodes'),
               ),
               const SizedBox(height: 8),
             ],
@@ -419,6 +419,128 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
         );
       },
     );
+  }
+
+  Future<void> _loadEpisodes(int seasonNumber) async {
+    try {
+      // Afficher un dialogue de chargement
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const AlertDialog(
+            backgroundColor: Color(0xFF1D2F3E),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF8C13A)),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Chargement des épisodes...',
+                  style: TextStyle(color: Color(0xFFF4F6F8)),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
+      // Récupérer les détails de la saison
+      final seasonDetails = await _tmdbService.getSeasonDetails(
+        widget.serieId,
+        seasonNumber,
+      );
+
+      // Fermer le dialogue de chargement
+      Navigator.of(context).pop();
+
+      // Afficher les épisodes dans un dialogue
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            final episodes = seasonDetails['episodes'] as List<dynamic>;
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1D2F3E),
+              title: Text(
+                'Saison $seasonNumber',
+                style: const TextStyle(
+                  color: Color(0xFFF8C13A),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: episodes.length,
+                  itemBuilder: (context, index) {
+                    final episode = episodes[index];
+                    final episodeNumber = episode['episode_number'] as int;
+                    final episodeName = episode['name'] as String;
+                    final airDate = episode['air_date'] as String? ?? '';
+                    final formattedDate =
+                        airDate.isNotEmpty
+                            ? _formatDate(airDate)
+                            : 'Date inconnue';
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      title: Text(
+                        'E$episodeNumber. $episodeName',
+                        style: const TextStyle(
+                          color: Color(0xFFF4F6F8),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        formattedDate,
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        color: Color(0xFFF8C13A),
+                        size: 16,
+                      ),
+                      onTap: () {
+                        // Fermer le dialogue
+                        Navigator.of(context).pop();
+
+                        // Naviguer vers la page de détail de l'épisode
+                        context.go(
+                          '/series/detail/${widget.serieId}/season/$seasonNumber/episode/$episodeNumber',
+                          extra: _tvShowDetails!.name,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text(
+                    'Fermer',
+                    style: TextStyle(color: Color(0xFFF8C13A)),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      // Fermer le dialogue de chargement en cas d'erreur
+      if (mounted) {
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildInfoRow(String label, String value) {

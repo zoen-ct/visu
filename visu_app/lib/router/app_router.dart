@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '/visu.dart';
 
 class AppRouter {
-
   AppRouter({AuthService? authService})
     : _authService = authService ?? AuthService();
   final AuthService _authService;
@@ -47,6 +46,33 @@ class AppRouter {
                       int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
                   return SerieDetailScreen(serieId: id);
                 },
+                routes: [
+                  GoRoute(
+                    path: 'season/:seasonNumber/episode/:episodeNumber',
+                    builder: (context, state) {
+                      final serieId =
+                          int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+                      final seasonNumber =
+                          int.tryParse(
+                            state.pathParameters['seasonNumber'] ?? '',
+                          ) ??
+                          1;
+                      final episodeNumber =
+                          int.tryParse(
+                            state.pathParameters['episodeNumber'] ?? '',
+                          ) ??
+                          1;
+                      final serieName = state.extra as String? ?? 'Série';
+
+                      return EpisodeDetailScreen(
+                        serieId: serieId,
+                        seasonNumber: seasonNumber,
+                        episodeNumber: episodeNumber,
+                        serieName: serieName,
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

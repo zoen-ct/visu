@@ -20,7 +20,6 @@ class TMDbConfig {
 }
 
 class TMDbService {
-
   TMDbService({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
@@ -153,7 +152,6 @@ class TMDbService {
     }
   }
 
-  // Méthode pour obtenir les séries tendances
   Future<List<Serie>> getTrendingSeries({String timeWindow = 'week'}) async {
     final response = await http.get(
       Uri.parse(
@@ -167,6 +165,68 @@ class TMDbService {
       return results.map((serie) => Serie.fromSearchJson(serie)).toList();
     } else {
       throw Exception('Échec de chargement des séries tendances');
+    }
+  }
+
+  Future<Episode> getEpisodeDetails(
+    int serieId,
+    int seasonNumber,
+    int episodeNumber,
+  ) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('$_baseUrl/tv/$serieId/season/$seasonNumber/episode/$episodeNumber?api_key=$_apiKey&language=$_language'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Episode.fromJson(data, serieId: serieId, seasonId: seasonNumber);
+      } else {
+        throw Exception('Échec du chargement des détails de l\'épisode');
+      }
+    } catch (e) {
+      throw Exception(
+        'Erreur lors de la récupération des détails de l\'épisode: $e',
+      );
+    }
+  }
+
+  Future<bool> markEpisodeAsWatched(
+    int episodeId, {
+    bool watched = true,
+  }) async {
+    try {
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      final prefs = await SharedPreferences.getInstance();
+      final List<String> watchedEpisodes =
+          prefs.getStringList('watched_episodes') ?? [];
+
+      if (watched) {
+        if (!watchedEpisodes.contains(episodeId.toString())) {
+          watchedEpisodes.add(episodeId.toString());
+        }
+      } else {
+        watchedEpisodes.remove(episodeId.toString());
+      }
+
+      await prefs.setStringList('watched_episodes', watchedEpisodes);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> isEpisodeWatched(int episodeId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final List<String> watchedEpisodes =
+          prefs.getStringList('watched_episodes') ?? [];
+
+      return watchedEpisodes.contains(episodeId.toString());
+    } catch (e) {
+      return false;
     }
   }
 }
