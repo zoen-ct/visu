@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '/visu.dart';
@@ -191,7 +192,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Synopsis
           const Text(
             'Synopsis',
             style: TextStyle(
@@ -214,7 +214,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
           const SizedBox(height: 24),
 
-          // Informations
           const Text(
             'Informations',
             style: TextStyle(
@@ -235,7 +234,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
           const SizedBox(height: 24),
 
-          // Créateurs
           if (details.creators.isNotEmpty) ...[
             const Text(
               'Créateurs',
@@ -264,7 +262,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
             const SizedBox(height: 24),
           ],
 
-          // Casting
           if (details.cast.isNotEmpty) ...[
             const Text(
               'Casting',
@@ -310,7 +307,7 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
         _tvShowDetails!.seasons
             .where(
               (s) => s.seasonNumber > 0,
-            ) // Exclure la saison 0 (souvent les spéciaux)
+            )
             .toList();
 
     return ListView.builder(
@@ -403,7 +400,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                   ),
                 ),
               ],
-              // Bouton pour charger les épisodes
               ElevatedButton(
                 onPressed: () => _loadEpisodes(season.seasonNumber),
                 style: ElevatedButton.styleFrom(
@@ -423,7 +419,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
   Future<void> _loadEpisodes(int seasonNumber) async {
     try {
-      // Afficher un dialogue de chargement
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -447,16 +442,15 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
         },
       );
 
-      // Récupérer les détails de la saison
       final seasonDetails = await _tmdbService.getSeasonDetails(
         widget.serieId,
         seasonNumber,
       );
 
-      // Fermer le dialogue de chargement
-      Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
 
-      // Afficher les épisodes dans un dialogue
       if (mounted) {
         showDialog(
           context: context,
@@ -477,7 +471,7 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                   shrinkWrap: true,
                   itemCount: episodes.length,
                   itemBuilder: (context, index) {
-                    final episode = episodes[index];
+                    final episode = episodes[index] as Map<String, dynamic>;
                     final episodeNumber = episode['episode_number'] as int;
                     final episodeName = episode['name'] as String;
                     final airDate = episode['air_date'] as String? ?? '';
@@ -505,10 +499,8 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                         size: 16,
                       ),
                       onTap: () {
-                        // Fermer le dialogue
                         Navigator.of(context).pop();
 
-                        // Naviguer vers la page de détail de l'épisode
                         context.go(
                           '/series/detail/${widget.serieId}/season/$seasonNumber/episode/$episodeNumber',
                           extra: _tvShowDetails!.name,
@@ -532,7 +524,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
         );
       }
     } catch (e) {
-      // Fermer le dialogue de chargement en cas d'erreur
       if (mounted) {
         Navigator.of(context).pop();
 
@@ -692,7 +683,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
               )
               : CustomScrollView(
                 slivers: [
-                  // AppBar avec l'image de fond
                   SliverAppBar(
                     expandedHeight: 250,
                     pinned: true,
@@ -741,7 +731,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                       ),
                     ),
                     actions: [
-                      // Bouton Favoris
                       IconButton(
                         icon:
                             _isFavoriteLoading
@@ -796,18 +785,15 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                     ],
                   ),
 
-                  // Contenu principal
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // En-tête avec l'affiche et les informations
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Affiche
                               if (_tvShowDetails!.posterPath.isNotEmpty)
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
@@ -844,7 +830,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
                               const SizedBox(width: 16),
 
-                              // Informations
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,13 +846,12 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
                                     const SizedBox(height: 8),
 
-                                    // Note
                                     Row(
                                       children: [
                                         RatingBar.builder(
                                           initialRating:
                                               _tvShowDetails!.voteAverage /
-                                              2, // TMDb utilise une échelle de 10
+                                              2,
                                           minRating: 0,
                                           direction: Axis.horizontal,
                                           allowHalfRating: true,
@@ -894,7 +878,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
                                     const SizedBox(height: 12),
 
-                                    // Genres
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
@@ -934,7 +917,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
                           const SizedBox(height: 24),
 
-                          // Onglets
                           TabBar(
                             controller: _tabController,
                             indicatorColor: const Color(0xFFF8C13A),
@@ -950,7 +932,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                     ),
                   ),
 
-                  // Contenu des onglets
                   SliverFillRemaining(
                     child: TabBarView(
                       controller: _tabController,
