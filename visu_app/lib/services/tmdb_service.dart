@@ -229,4 +229,29 @@ class TMDbService {
       return false;
     }
   }
+
+  Future<List<SearchResult>> searchMulti(String query, {int page = 1}) async {
+    if (query.isEmpty) {
+      return [];
+    }
+
+    final response = await _client.get(
+      Uri.parse(
+        '$_baseUrl/search/multi?api_key=$_apiKey&language=$_language&query=${Uri.encodeComponent(query)}&page=$page',
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      final results = data['results'] as List<dynamic>;
+      return results
+          .map((item) => SearchResult.fromJson(item))
+          .where(
+            (result) => result.mediaType != MediaType.person,
+          )
+          .toList();
+    } else {
+      throw Exception('Échec de la recherche multi-type');
+    }
+  }
 }
