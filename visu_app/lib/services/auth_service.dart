@@ -8,7 +8,6 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import '/visu.dart';
 
 class AuthService {
-
   AuthService() {
     _initAuthState();
   }
@@ -107,6 +106,37 @@ class AuthService {
       return prefs.getString(ApiConfig.tokenKey);
     } catch (e) {
       debugPrint('Erreur lors de la récupération du token: $e');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getCurrentUser() async {
+    try {
+      final token = await getToken();
+
+      if (token != null && token.isNotEmpty) {
+        if (token.split('.').length >= 2) {
+          try {
+            final Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+            final prefs = await SharedPreferences.getInstance();
+            final userData = prefs.getString('user_data');
+
+            if (userData != null) {
+              return jsonDecode(userData);
+            }
+
+            return decodedToken;
+          } catch (e) {
+            debugPrint('Erreur lors du décodage du token: $e');
+            return null;
+          }
+        }
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('Erreur lors de la récupération des infos utilisateur: $e');
       return null;
     }
   }

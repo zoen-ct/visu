@@ -1,9 +1,93 @@
 import 'package:flutter/material.dart';
-import 'package:visu/services/auth_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 
-class ProfileScreen extends StatelessWidget {
+import '/visu.dart';
+
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
+  final UserService _userService = UserService();
+  final AuthService _authService = AuthService();
+
+  late TabController _tabController;
+  bool _isLoading = true;
+  Map<String, dynamic>? _userInfo;
+  Map<String, dynamic> _userStats = {};
+  List<SearchResult> _favorites = [];
+  List<SearchResult> _watchHistory = [];
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final userInfoFuture = _userService.getCurrentUserInfo();
+      final userStatsFuture = _userService.getUserStats();
+      final favoritesFuture = _userService.getFavorites();
+      final watchHistoryFuture = _userService.getWatchHistory();
+
+      final results = await Future.wait([
+        userInfoFuture,
+        userStatsFuture,
+        favoritesFuture,
+        watchHistoryFuture,
+      ]);
+
+      if (mounted) {
+        setState(() {
+          _userInfo = results[0] as Map<String, dynamic>?;
+          _userStats = results[1] as Map<String, dynamic>;
+          _favorites = results[2] as List<SearchResult>;
+          _watchHistory = results[3] as List<SearchResult>;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Erreur lors du chargement des données: $e';
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _navigateToDetails(SearchResult result) {
+    if (result.mediaType == MediaType.tv) {
+      context.push('/series/detail/${result.id}');
+    } else if (result.mediaType == MediaType.movie) {
+      // @TODO : Pour les films (à implémenter)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Détails des films à implémenter'),
+          backgroundColor: Color(0xFF16232E),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,66 +100,420 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFFF8C13A)),
             onPressed: () async {
-              await AuthService().logout();
+              await _authService.logout();
               if (context.mounted) {
                 context.go('/login');
               }
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFFF8C13A),
+          labelColor: const Color(0xFFF8C13A),
+          unselectedLabelColor: Colors.grey,
+          tabs: const [
+            Tab(text: 'Profil'),
+            Tab(text: 'Favoris'),
+            Tab(text: 'Historique'),
+          ],
+        ),
       ),
-      body: Center(
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF8C13A)),
+                ),
+              )
+              : _errorMessage != null
+              ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.white),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadUserData,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF8C13A),
+                        foregroundColor: const Color(0xFF16232E),
+                      ),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
+              )
+              : TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildProfileTab(),
+                  _buildFavoritesTab(),
+                  _buildHistoryTab(),
+                ],
+              ),
+    );
+  }
+
+  Widget _buildProfileTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          // Avatar and user info
+          CircleAvatar(
+            radius: 50,
+            backgroundColor: const Color(0xFFF8C13A),
+            backgroundImage:
+                _userInfo != null && _userInfo!['profilePicture'] != null
+                    ? NetworkImage(_userInfo!['profilePicture'])
+                    : null,
+            child:
+                _userInfo != null && _userInfo!['profilePicture'] != null
+                    ? null
+                    : const Icon(
+                      Icons.person,
+                      size: 50,
+                      color: Color(0xFF16232E),
+                    ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            _userInfo != null ? _userInfo!['name'] : 'Utilisateur Vizu',
+            style: const TextStyle(
+              color: Color(0xFFF4F6F8),
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _userInfo != null ? _userInfo!['email'] : 'utilisateur@vizu.com',
+            style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+          ),
+
+          const SizedBox(height: 32),
+
+          const Text(
+            'Statistiques de visionnage',
+            style: TextStyle(
+              color: Color(0xFFF8C13A),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Card(
+            color: const Color(0xFF1D2F3E),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildStatRow(
+                    Icons.movie,
+                    'Films regardés',
+                    _userStats['totalWatchedMovies']?.toString() ?? '0',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatRow(
+                    Icons.tv,
+                    'Épisodes regardés',
+                    _userStats['totalWatchedEpisodes']?.toString() ?? '0',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatRow(
+                    Icons.favorite,
+                    'Favoris',
+                    _userStats['totalFavorites']?.toString() ?? '0',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildStatRow(
+                    Icons.timer,
+                    'Temps de visionnage',
+                    '${_userStats['totalWatchTimeHours']?.toString() ?? '0'} heures',
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          const Text(
+            'Options',
+            style: TextStyle(
+              color: Color(0xFFF8C13A),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          _buildProfileOption(Icons.settings, 'Paramètres'),
+          _buildProfileOption(Icons.help_outline, 'Aide'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFavoritesTab() {
+    if (_favorites.isEmpty) {
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircleAvatar(
-              radius: 50,
-              backgroundColor: Color(0xFFF8C13A),
-              child: Icon(Icons.person, size: 50, color: Color(0xFF16232E)),
+            Icon(Icons.favorite_border, color: Color(0xFFF8C13A), size: 64),
+            SizedBox(height: 16),
+            Text(
+              'Vous n\'avez pas encore de favoris',
+              style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 18),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 20),
-            const Text(
-              'Utilisateur Vizu',
-              style: TextStyle(
-                color: Color(0xFFF4F6F8),
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            SizedBox(height: 8),
+            Text(
+              'Ajoutez des films et séries à vos favoris\npour les retrouver ici',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: _favorites.length,
+      itemBuilder: (context, index) {
+        final item = _favorites[index];
+        return _buildMediaCard(item);
+      },
+    );
+  }
+
+  Widget _buildHistoryTab() {
+    if (_watchHistory.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.history, color: Color(0xFFF8C13A), size: 64),
+            SizedBox(height: 16),
+            Text(
+              'Votre historique est vide',
+              style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Les films et épisodes que vous regardez\napparaîtront ici',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16.0),
+      itemCount: _watchHistory.length,
+      itemBuilder: (context, index) {
+        final item = _watchHistory[index];
+        return _buildMediaCard(item);
+      },
+    );
+  }
+
+  Widget _buildMediaCard(SearchResult media) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      color: const Color(0xFF1D2F3E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => _navigateToDetails(media),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image d'affiche
+            CachedNetworkImage(
+              imageUrl: media.getFullPosterPath(),
+              width: 80,
+              height: 120,
+              fit: BoxFit.cover,
+              placeholder:
+                  (context, url) => Container(
+                    width: 80,
+                    height: 120,
+                    color: Colors.grey[800],
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFFF8C13A),
+                        ),
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+              errorWidget:
+                  (context, url, error) => Container(
+                    width: 80,
+                    height: 120,
+                    color: Colors.grey[800],
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      color: Colors.white,
+                    ),
+                  ),
+            ),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      media.title,
+                      style: const TextStyle(
+                        color: Color(0xFFF4F6F8),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // Type and year
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8C13A),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            media.getMediaTypeDisplay(),
+                            style: const TextStyle(
+                              color: Color(0xFF16232E),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        if (media.getYearFromReleaseDate().isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            media.getYearFromReleaseDate(),
+                            style: const TextStyle(
+                              color: Color(0xFFF4F6F8),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Average rating
+                    if (media.voteAverage > 0) ...[
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star,
+                            color: Color(0xFFF8C13A),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            media.voteAverage.toStringAsFixed(1),
+                            style: const TextStyle(
+                              color: Color(0xFFF4F6F8),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'utilisateur@vizu.com',
-              style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
-            ),
-            const SizedBox(height: 30),
-            _buildProfileOption(Icons.favorite, 'Mes favoris'),
-            _buildProfileOption(Icons.history, 'Historique'),
-            _buildProfileOption(Icons.settings, 'Paramètres'),
-            _buildProfileOption(Icons.help_outline, 'Aide'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileOption(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 32),
-      child: Card(
-        color: const Color(0xFF1D2F3E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          leading: Icon(icon, color: const Color(0xFFF8C13A)),
-          title: Text(text, style: const TextStyle(color: Color(0xFFF4F6F8))),
-          trailing: const Icon(
-            Icons.arrow_forward_ios,
-            color: Color(0xFFF8C13A),
-            size: 16,
+  Widget _buildStatRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFFF8C13A), size: 24),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
           ),
-          onTap: () {
-            // Navigate to the corresponding page
-          },
         ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFFF8C13A),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileOption(IconData icon, String text) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: const Color(0xFF1D2F3E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: const Color(0xFFF8C13A)),
+        title: Text(text, style: const TextStyle(color: Color(0xFFF4F6F8))),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          color: Color(0xFFF8C13A),
+          size: 16,
+        ),
+        onTap: () {
+          // Implement navigation to the corresponding pages
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Navigation vers $text à implémenter'),
+              backgroundColor: const Color(0xFF16232E),
+            ),
+          );
+        },
       ),
     );
   }

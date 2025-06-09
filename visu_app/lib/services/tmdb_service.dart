@@ -175,7 +175,9 @@ class TMDbService {
   ) async {
     try {
       final response = await _client.get(
-        Uri.parse('$_baseUrl/tv/$serieId/season/$seasonNumber/episode/$episodeNumber?api_key=$_apiKey&language=$_language'),
+        Uri.parse(
+          '$_baseUrl/tv/$serieId/season/$seasonNumber/episode/$episodeNumber?api_key=$_apiKey&language=$_language',
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -246,12 +248,54 @@ class TMDbService {
       final results = data['results'] as List<dynamic>;
       return results
           .map((item) => SearchResult.fromJson(item))
-          .where(
-            (result) => result.mediaType != MediaType.person,
-          )
+          .where((result) => result.mediaType != MediaType.person)
           .toList();
     } else {
       throw Exception('Échec de la recherche multi-type');
+    }
+  }
+
+  Future<SearchResult> getMediaDetails(
+    int id, {
+    MediaType mediaType = MediaType.unknown,
+  }) async {
+    try {
+      String endpoint;
+
+      if (mediaType == MediaType.unknown) {
+        mediaType = MediaType.tv;
+      }
+
+      switch (mediaType) {
+        case MediaType.movie:
+          endpoint = 'movie';
+          break;
+        case MediaType.tv:
+          endpoint = 'tv';
+          break;
+        default:
+          endpoint = 'tv';
+      }
+
+      final response = await _client.get(
+        Uri.parse(
+          '$_baseUrl/$endpoint/$id?api_key=$_apiKey&language=$_language',
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+
+        data['media_type'] = endpoint;
+
+        return SearchResult.fromJson(data);
+      } else {
+        throw Exception('Échec de la récupération des détails du média');
+      }
+    } catch (e) {
+      throw Exception(
+        'Erreur lors de la récupération des détails du média: $e',
+      );
     }
   }
 }
