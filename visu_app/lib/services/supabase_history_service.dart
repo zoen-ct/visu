@@ -103,22 +103,6 @@ class SupabaseHistoryService {
         return true;
       }
 
-      // Vérifier si l'élément est déjà dans la watchlist et le supprimer
-      final watchlistService = SupabaseWatchlistService();
-      final isInWatchlist = await watchlistService.isInWatchlist(
-        itemId: itemId,
-        mediaType: mediaType,
-      );
-
-      if (isInWatchlist) {
-        // Supprimer de la watchlist puisqu'il va être marqué comme vu
-        await watchlistService.toggleWatchlist(
-          itemId: itemId,
-          mediaType: mediaType,
-          addToWatchlist: false,
-        );
-      }
-
       final historyEntry = {
         'user_id': userId,
         'item_id': itemId,
