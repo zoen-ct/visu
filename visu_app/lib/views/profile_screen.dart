@@ -63,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
       // Récupérer l'historique
       final watchHistory = await _historyService.getHistory();
-      
+
       // Sauvegarder les données brutes de l'historique
       _historyRawData = watchHistory;
 
@@ -301,18 +301,24 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   // Méthode pour retirer un épisode de l'historique
-  Future<void> _removeFromHistory(SearchResult media, {int? seasonNumber, int? episodeNumber}) async {
+  Future<void> _removeFromHistory(
+    SearchResult media, {
+    int? seasonNumber,
+    int? episodeNumber,
+  }) async {
     // Vérifier que l'élément existe dans l'historique
     final mediaId = media.id;
-    
+
     // Activer l'indicateur de chargement pour ce média
     setState(() {
       _isRemovingFromHistory[mediaId] = true;
     });
-    
+
     try {
       bool success;
-      if (media.mediaType == MediaType.tv && seasonNumber != null && episodeNumber != null) {
+      if (media.mediaType == MediaType.tv &&
+          seasonNumber != null &&
+          episodeNumber != null) {
         // Retirer un épisode spécifique
         success = await _historyService.markAsWatched(
           itemId: mediaId,
@@ -329,11 +335,11 @@ class _ProfileScreenState extends State<ProfileScreen>
           watched: false,
         );
       }
-      
+
       if (success) {
         // Recharger les données
         await _loadUserData();
-        
+
         // Afficher un message de confirmation
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -348,10 +354,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -369,14 +372,15 @@ class _ProfileScreenState extends State<ProfileScreen>
     final seasonNumber = media.seasonNumber;
     final episodeNumber = media.episodeNumber;
     final episodeData = _historyRawData.firstWhere(
-      (item) => item['item_id'] == media.id && 
-                item['season_number'] == seasonNumber && 
-                item['episode_number'] == episodeNumber,
+      (item) =>
+          item['item_id'] == media.id &&
+          item['season_number'] == seasonNumber &&
+          item['episode_number'] == episodeNumber,
       orElse: () => {},
     );
-    
+
     final isLoading = _isRemovingFromHistory[media.id] ?? false;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       color: const Color(0xFF1D2F3E),
@@ -398,23 +402,25 @@ class _ProfileScreenState extends State<ProfileScreen>
                   width: 60,
                   height: 90,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey[800],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFFF8C13A),
+                  placeholder:
+                      (context, url) => Container(
+                        color: Colors.grey[800],
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFF8C13A),
+                            ),
+                            strokeWidth: 2,
+                          ),
                         ),
-                        strokeWidth: 2,
                       ),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[800],
-                    width: 60,
-                    height: 90,
-                    child: const Icon(Icons.error, color: Colors.white),
-                  ),
+                  errorWidget:
+                      (context, url, error) => Container(
+                        color: Colors.grey[800],
+                        width: 60,
+                        height: 90,
+                        child: const Icon(Icons.error, color: Colors.white),
+                      ),
                 ),
               ),
 
@@ -474,29 +480,31 @@ class _ProfileScreenState extends State<ProfileScreen>
                   color: const Color(0xFFF8C13A),
                   shape: BoxShape.circle,
                 ),
-                child: isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF16232E),
-                          strokeWidth: 2,
+                child:
+                    isLoading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF16232E),
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : IconButton(
+                          padding: EdgeInsets.zero,
+                          onPressed:
+                              () => _removeFromHistory(
+                                media,
+                                seasonNumber: seasonNumber,
+                                episodeNumber: episodeNumber,
+                              ),
+                          icon: const Icon(
+                            Icons.visibility_off,
+                            color: Color(0xFF16232E),
+                            size: 20,
+                          ),
+                          tooltip: 'Retirer de l\'historique',
                         ),
-                      )
-                    : IconButton(
-                        padding: EdgeInsets.zero,
-                        onPressed: () => _removeFromHistory(
-                          media,
-                          seasonNumber: seasonNumber,
-                          episodeNumber: episodeNumber,
-                        ),
-                        icon: const Icon(
-                          Icons.visibility_off,
-                          color: Color(0xFF16232E),
-                          size: 20,
-                        ),
-                        tooltip: 'Retirer de l\'historique',
-                      ),
               ),
             ],
           ),
@@ -765,12 +773,14 @@ class _ProfileScreenState extends State<ProfileScreen>
       itemCount: _watchHistory.length,
       itemBuilder: (context, index) {
         final item = _watchHistory[index];
-        
+
         // Utiliser le widget d'épisode pour les séries avec saison et épisode
-        if (item.mediaType == MediaType.tv && item.seasonNumber != null && item.episodeNumber != null) {
+        if (item.mediaType == MediaType.tv &&
+            item.seasonNumber != null &&
+            item.episodeNumber != null) {
           return _buildEpisodeCard(item);
         }
-        
+
         // Utiliser le widget standard pour les films
         return _buildMediaCard(item);
       },
@@ -778,6 +788,13 @@ class _ProfileScreenState extends State<ProfileScreen>
   }
 
   Widget _buildMediaCard(SearchResult media) {
+    final isLoading = _isRemovingFromHistory[media.id] ?? false;
+    final movieData = _historyRawData.firstWhere(
+      (item) =>
+          item['item_id'] == media.id && item['type'] == MediaType.movie.name,
+      orElse: () => {},
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       color: const Color(0xFF1D2F3E),
@@ -789,35 +806,41 @@ class _ProfileScreenState extends State<ProfileScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Image d'affiche
-            CachedNetworkImage(
-              imageUrl: media.getFullPosterPath(),
-              width: 80,
-              height: 120,
-              fit: BoxFit.cover,
-              placeholder:
-                  (context, url) => Container(
-                    width: 80,
-                    height: 120,
-                    color: Colors.grey[800],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFFF8C13A),
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                bottomLeft: Radius.circular(12),
+              ),
+              child: CachedNetworkImage(
+                imageUrl: media.getFullPosterPath(),
+                width: 80,
+                height: 120,
+                fit: BoxFit.cover,
+                placeholder:
+                    (context, url) => Container(
+                      width: 80,
+                      height: 120,
+                      color: Colors.grey[800],
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFFF8C13A),
+                          ),
+                          strokeWidth: 2,
                         ),
-                        strokeWidth: 2,
                       ),
                     ),
-                  ),
-              errorWidget:
-                  (context, url, error) => Container(
-                    width: 80,
-                    height: 120,
-                    color: Colors.grey[800],
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      color: Colors.white,
+                errorWidget:
+                    (context, url, error) => Container(
+                      width: 80,
+                      height: 120,
+                      color: Colors.grey[800],
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
+              ),
             ),
 
             // Content
@@ -827,11 +850,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
+                    // Titre
                     Text(
                       media.title,
                       style: const TextStyle(
-                        color: Color(0xFFF4F6F8),
+                        color: Color(0xFFF8C13A),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -841,7 +864,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                     const SizedBox(height: 4),
 
-                    // Type and year
+                    // Type et année
                     Row(
                       children: [
                         Container(
@@ -878,7 +901,20 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                     const SizedBox(height: 8),
 
-                    // Average rating
+                    // Description (extrait)
+                    Text(
+                      movieData['overview'] ?? 'Film visionné',
+                      style: const TextStyle(
+                        color: Color(0xFFF4F6F8),
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // Note moyenne
                     if (media.voteAverage > 0) ...[
                       Row(
                         children: [
@@ -900,6 +936,39 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ],
                   ],
                 ),
+              ),
+            ),
+
+            // Bouton pour retirer de l'historique
+            Padding(
+              padding: const EdgeInsets.only(right: 8, top: 8),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8C13A),
+                  shape: BoxShape.circle,
+                ),
+                child:
+                    isLoading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF16232E),
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : IconButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () => _removeFromHistory(media),
+                          icon: const Icon(
+                            Icons.visibility_off,
+                            color: Color(0xFF16232E),
+                            size: 20,
+                          ),
+                          tooltip: 'Retirer de l\'historique',
+                        ),
               ),
             ),
           ],
