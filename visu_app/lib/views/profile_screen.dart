@@ -138,6 +138,147 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
+  // Afficher la boîte de dialogue pour modifier le profil utilisateur
+  void _showEditProfileDialog() {
+    final TextEditingController usernameController = TextEditingController(
+      text:
+          _userInfo != null && _userInfo!['username'] != null
+              ? _userInfo!['username']
+              : '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1D2F3E),
+          title: const Text(
+            'Modifier mon profil',
+            style: TextStyle(color: Color(0xFFF8C13A)),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: const Color(0xFFF8C13A),
+                  backgroundImage:
+                      _userInfo != null && _userInfo!['avatar_url'] != null
+                          ? NetworkImage(_userInfo!['avatar_url'])
+                          : null,
+                  child:
+                      _userInfo != null && _userInfo!['avatar_url'] != null
+                          ? null
+                          : const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Color(0xFF16232E),
+                          ),
+                ),
+                const SizedBox(height: 16),
+                TextButton.icon(
+                  icon: const Icon(Icons.photo_camera),
+                  label: const Text('Changer ma photo'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFF8C13A),
+                  ),
+                  onPressed: () {
+                    // Ici on pourrait implémenter la sélection d'une photo
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Fonctionnalité à implémenter dans une version future',
+                        ),
+                        backgroundColor: Color(0xFF16232E),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: usernameController,
+                  style: const TextStyle(color: Color(0xFFF4F6F8)),
+                  decoration: const InputDecoration(
+                    labelText: 'Nom d\'utilisateur',
+                    labelStyle: TextStyle(color: Color(0xFFF8C13A)),
+                    hintText: 'Entrez votre nom d\'utilisateur',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFF8C13A)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newUsername = usernameController.text.trim();
+                if (newUsername.isNotEmpty) {
+                  final success = await _userProfileService.updateUsername(
+                    newUsername,
+                  );
+                  if (success && mounted) {
+                    // Rafraîchir les données utilisateur
+                    await _loadUserData();
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profil mis à jour avec succès'),
+                        backgroundColor: Color(0xFF16232E),
+                      ),
+                    );
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Erreur lors de la mise à jour du profil',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    Navigator.pop(context);
+                  }
+                } else {
+                  // Si le champ est vide, on considère que l'utilisateur veut revenir au nom par défaut
+                  final success = await _userProfileService.updateUsername(
+                    null,
+                  );
+                  if (success && mounted) {
+                    await _loadUserData();
+                    Navigator.pop(context);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Nom d\'utilisateur réinitialisé'),
+                        backgroundColor: Color(0xFF16232E),
+                      ),
+                    );
+                  }
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFF8C13A),
+              ),
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,11 +365,11 @@ class _ProfileScreenState extends State<ProfileScreen>
             radius: 50,
             backgroundColor: const Color(0xFFF8C13A),
             backgroundImage:
-                _userInfo != null && _userInfo!['profile_picture'] != null
-                    ? NetworkImage(_userInfo!['profile_picture'])
+                _userInfo != null && _userInfo!['avatar_url'] != null
+                    ? NetworkImage(_userInfo!['avatar_url'])
                     : null,
             child:
-                _userInfo != null && _userInfo!['profile_picture'] != null
+                _userInfo != null && _userInfo!['avatar_url'] != null
                     ? null
                     : const Icon(
                       Icons.person,
@@ -240,9 +381,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Text(
             _userInfo != null && _userInfo!['username'] != null
                 ? _userInfo!['username']
-                : (_userInfo != null && _userInfo!['name'] != null
-                    ? _userInfo!['name']
-                    : 'Utilisateur Visu'),
+                : 'Visueur',
             style: const TextStyle(
               color: Color(0xFFF4F6F8),
               fontSize: 24,
@@ -255,6 +394,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ? _userInfo!['email']
                 : _authService.currentUser?.email ?? 'utilisateur@visu.com',
             style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.edit),
+            label: const Text('Modifier mon profil'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1D2F3E),
+              foregroundColor: const Color(0xFFF8C13A),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            onPressed: () {
+              // Naviguer vers une page d'édition de profil
+              _showEditProfileDialog();
+            },
           ),
 
           const SizedBox(height: 32),

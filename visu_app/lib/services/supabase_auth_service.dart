@@ -46,17 +46,10 @@ class SupabaseAuthService {
     Map<String, dynamic>? userData,
   }) async {
     try {
-      // Récupérer le username depuis userData ou générer depuis l'email
-      final String username = userData?['name'] ?? email.split('@').first;
-
-      // Préparation des données utilisateur avec le username pour les métadonnées
-      final userMetadata = {...?userData, 'username': username};
-
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
-        data:
-            userMetadata, // Stockage du username dans les métadonnées de l'utilisateur
+        data: userData ?? {}, // Données utilisateur minimales
       );
 
       if (response.user != null) {
@@ -64,12 +57,11 @@ class SupabaseAuthService {
         await Future.delayed(const Duration(milliseconds: 500));
 
         try {
-          // Insérer les champs obligatoires dans la table user_profiles
-          // N'inclure que les champs qui existent réellement dans la table
+          // Créer un profil utilisateur basique avec juste l'ID
+          // Les autres champs seront null jusqu'à ce que l'utilisateur les définisse
           await supabase.from(SupabaseConfig.userProfileTable).insert({
             'id': response.user!.id,
-            'name': username,
-            'profile_picture': SupabaseConfig.defaultProfileImage,
+            'email': email,
             'created_at': DateTime.now().toIso8601String(),
           });
         } catch (profileError) {
@@ -105,24 +97,31 @@ class SupabaseAuthService {
 
   User? get currentUser => supabase.auth.currentUser;
 
-  Future<String?> getUsername() async {
+  Future<String> getUsername() async {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) {
-        return null;
+        return "Visueur"; // Utilisateur non connecté
       }
 
-      // Récupérer le username depuis les métadonnées de l'utilisateur
-      final String? username = user.userMetadata?['username'] as String?;
+      // Tenter d'obtenir le nom d'utilisateur depuis la table de profil
+      final data =
+          await supabase
+              .from(SupabaseConfig.userProfileTable)
+              .select('username')
+              .eq('id', user.id)
+              .maybeSingle();
 
-      // Si le username n'est pas trouvé dans les métadonnées, utiliser la partie avant @ de l'email
-      return username ?? user.email?.split('@').first;
+      // Le nom d'utilisateur est maintenant toujours défini, mais on vérifie quand même
+      return (data != null && data['username'] != null)
+          ? data['username']
+          : "Visueur";
     } catch (e) {
       SupabaseConfig.logError(
         'Erreur lors de la récupération du nom d\'utilisateur',
         e,
       );
-      return null;
+      return "Visueur"; // En cas d'erreur, utiliser le nom par défaut
     }
   }
 
