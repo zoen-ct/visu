@@ -116,7 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Rejoignez Vizu pour suivre vos films et séries préférés',
+                  'Rejoignez Visu pour suivre vos films et séries préférés',
                   style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 14),
                 ),
                 const SizedBox(height: 24),

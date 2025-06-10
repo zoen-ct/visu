@@ -242,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ? _userInfo!['username']
                 : (_userInfo != null && _userInfo!['name'] != null
                     ? _userInfo!['name']
-                    : 'Utilisateur Vizu'),
+                    : 'Utilisateur Visu'),
             style: const TextStyle(
               color: Color(0xFFF4F6F8),
               fontSize: 24,
@@ -253,7 +253,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           Text(
             _userInfo != null && _userInfo!['email'] != null
                 ? _userInfo!['email']
-                : _authService.currentUser?.email ?? 'utilisateur@vizu.com',
+                : _authService.currentUser?.email ?? 'utilisateur@visu.com',
             style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
           ),
 

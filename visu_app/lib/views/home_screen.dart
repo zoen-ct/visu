@@ -13,7 +13,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF16232E),
         title: const Text(
-          'Vizu - Accueil',
+          'Visu - Accueil',
           style: TextStyle(color: Color(0xFFF8C13A)),
         ),
         actions: [
@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
       ),
       body: const Center(
         child: Text(
-          'Bienvenue sur Vizu!',
+          'Bienvenue sur Visu!',
           style: TextStyle(
             color: Color(0xFFF4F6F8),
             fontSize: 24,

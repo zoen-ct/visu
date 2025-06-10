@@ -97,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'Vizu',
+                          'Visu',
                           style: TextStyle(
                             color: Color(0xFFF8C13A),
                             fontSize: 32,
