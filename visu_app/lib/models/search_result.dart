@@ -1,4 +1,4 @@
-import 'package:visu/services/tmdb_service.dart';
+import '/visu.dart';
 
 enum MediaType { movie, tv, person, unknown }
 
