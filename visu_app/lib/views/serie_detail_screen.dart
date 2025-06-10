@@ -17,6 +17,9 @@ class SerieDetailScreen extends StatefulWidget {
 class _SerieDetailScreenState extends State<SerieDetailScreen>
     with SingleTickerProviderStateMixin {
   late TMDbService _tmdbService;
+  late SupabaseFavoritesService _favoritesService;
+  late SupabaseHistoryService _historyService;
+
   TvShowDetails? _tvShowDetails;
   bool _isLoading = true;
   String? _errorMessage;
@@ -32,6 +35,8 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
   void initState() {
     super.initState();
     _tmdbService = TMDbService();
+    _favoritesService = SupabaseFavoritesService();
+    _historyService = SupabaseHistoryService();
     _tabController = TabController(length: 2, vsync: this);
     _loadTvShowDetails();
     _checkFavoriteStatus();
@@ -73,94 +78,150 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
   }
 
   Future<void> _checkFavoriteStatus() async {
-    final isFavorite = await _tmdbService.isFavorite(widget.serieId);
-    if (mounted) {
-      setState(() {
-        _isFavorite = isFavorite;
-      });
+    try {
+      final isFavorite = await _favoritesService.isFavorite(
+        itemId: widget.serieId,
+        mediaType: MediaType.tv,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = isFavorite;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de la vérification des favoris: $e');
     }
   }
 
   Future<void> _checkWatchlistStatus() async {
-    final isInWatchlist = await _tmdbService.isInWatchlist(widget.serieId);
-    if (mounted) {
-      setState(() {
-        _isInWatchlist = isInWatchlist;
-      });
+    try {
+      final isInWatchlist = await _historyService.isWatched(
+        itemId: widget.serieId,
+        mediaType: MediaType.tv,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isInWatchlist = isInWatchlist;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de la vérification de l\'historique: $e');
     }
   }
 
   Future<void> _toggleFavorite() async {
-    if (_isFavoriteLoading) return;
+    if (_isFavoriteLoading || _tvShowDetails == null) return;
 
     setState(() {
       _isFavoriteLoading = true;
     });
 
-    bool success;
-    if (_isFavorite) {
-      success = await _tmdbService.removeFromFavorites(widget.serieId);
-    } else {
-      success = await _tmdbService.addToFavorites(widget.serieId);
-    }
+    try {
+      bool success;
+      if (_isFavorite) {
+        success = await _favoritesService.removeFromFavorites(
+          itemId: widget.serieId,
+          mediaType: MediaType.tv,
+        );
+      } else {
+        success = await _favoritesService.addToFavorites(
+          itemId: widget.serieId,
+          mediaType: MediaType.tv,
+          title: _tvShowDetails!.name,
+          posterPath: _tvShowDetails!.posterPath,
+        );
+      }
 
-    if (mounted && success) {
-      setState(() {
-        _isFavorite = !_isFavorite;
-        _isFavoriteLoading = false;
-      });
+      if (mounted && success) {
+        setState(() {
+          _isFavorite = !_isFavorite;
+          _isFavoriteLoading = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _isFavorite ? 'Ajouté aux favoris' : 'Retiré des favoris',
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isFavorite ? 'Ajouté aux favoris' : 'Retiré des favoris',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: const Color(0xFF16232E),
           ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: const Color(0xFF16232E),
-        ),
-      );
-    } else if (mounted) {
-      setState(() {
-        _isFavoriteLoading = false;
-      });
+        );
+      } else if (mounted) {
+        setState(() {
+          _isFavoriteLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isFavoriteLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
   Future<void> _toggleWatchlist() async {
-    if (_isWatchlistLoading) return;
+    if (_isWatchlistLoading || _tvShowDetails == null) return;
 
     setState(() {
       _isWatchlistLoading = true;
     });
 
-    bool success;
-    if (_isInWatchlist) {
-      success = await _tmdbService.removeFromWatchlist(widget.serieId);
-    } else {
-      success = await _tmdbService.addToWatchlist(widget.serieId);
-    }
+    try {
+      bool success;
+      if (_isInWatchlist) {
+        success = await _historyService.markAsWatched(
+          itemId: widget.serieId,
+          mediaType: MediaType.tv,
+          watched: false,
+        );
+      } else {
+        success = await _historyService.markAsWatched(
+          itemId: widget.serieId,
+          mediaType: MediaType.tv,
+          title: _tvShowDetails!.name,
+          posterPath: _tvShowDetails!.posterPath,
+          watched: true,
+        );
+      }
 
-    if (mounted && success) {
-      setState(() {
-        _isInWatchlist = !_isInWatchlist;
-        _isWatchlistLoading = false;
-      });
+      if (mounted && success) {
+        setState(() {
+          _isInWatchlist = !_isInWatchlist;
+          _isWatchlistLoading = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _isInWatchlist
-                ? 'Ajouté à la liste "À voir"'
-                : 'Retiré de la liste "À voir"',
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isInWatchlist
+                  ? 'Ajouté à la liste "À voir"'
+                  : 'Retiré de la liste "À voir"',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: const Color(0xFF16232E),
           ),
-          duration: const Duration(seconds: 2),
-          backgroundColor: const Color(0xFF16232E),
-        ),
-      );
-    } else if (mounted) {
-      setState(() {
-        _isWatchlistLoading = false;
-      });
+        );
+      } else if (mounted) {
+        setState(() {
+          _isWatchlistLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isWatchlistLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -304,11 +365,7 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
     }
 
     final seasons =
-        _tvShowDetails!.seasons
-            .where(
-              (s) => s.seasonNumber > 0,
-            )
-            .toList();
+        _tvShowDetails!.seasons.where((s) => s.seasonNumber > 0).toList();
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -850,8 +907,7 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                                       children: [
                                         RatingBar.builder(
                                           initialRating:
-                                              _tvShowDetails!.voteAverage /
-                                              2,
+                                              _tvShowDetails!.voteAverage / 2,
                                           minRating: 0,
                                           direction: Axis.horizontal,
                                           allowHalfRating: true,

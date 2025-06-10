@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:visu/router/app_router.dart';
+import 'package:visu/services/supabase_initializer.dart';
 
 import 'visu.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialisation de Supabase
+  await SupabaseInitializer.initialize();
+
   runApp(const MyApp());
 }
 
@@ -15,7 +21,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final AuthService _authService = AuthService();
+  final SupabaseAuthService _authService = SupabaseAuthService();
 
   late final AppRouter _appRouter;
 
@@ -23,12 +29,6 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _appRouter = AppRouter(authService: _authService);
-  }
-
-  @override
-  void dispose() {
-    _authService.dispose();
-    super.dispose();
   }
 
   @override

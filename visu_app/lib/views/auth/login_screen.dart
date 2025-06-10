@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '/visu.dart';
 
@@ -14,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final AuthService _authService = AuthService();
+  final SupabaseAuthService _authService = SupabaseAuthService();
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -36,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final success = await _authService.loginUser(
+      final response = await _authService.signIn(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -46,13 +47,20 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
 
-        if (success) {
+        if (response.user != null) {
           // Redirection will be handled by go_router
         } else {
           setState(() {
             _errorMessage = 'Email ou mot de passe incorrect';
           });
         }
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.message;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -163,27 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 8),
-
-                  // Forgot password link
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        // TODO: Naviguer vers la page de récupération de mot de passe
-                      },
-                      child: const Text(
-                        'Mot de passe oublié ?',
-                        style: TextStyle(
-                          color: Color(0xFFF8C13A),
-                          fontSize: 14,
-                          fontFamily: 'Roboto',
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
 
                   // Error message
                   if (_errorMessage != null) ...[
