@@ -1,79 +1,70 @@
-import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '/visu.dart';
 
 class SupabaseUserProfileService {
-  final String _tableName = SupabaseConfig.userProfileTable;
+  final SupabaseAuthService _authService = SupabaseAuthService();
 
+  // Récupérer les informations du profil utilisateur
   Future<Map<String, dynamic>?> getUserProfile() async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return null;
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        throw Exception('Utilisateur non connecté');
+      }
 
-      final data =
+      final response =
           await supabase
-              .from(_tableName)
+              .from(SupabaseConfig.userProfileTable)
               .select()
-              .eq('user_id', userId)
+              .eq('id', userId)
               .single();
 
-      return data;
+      return response;
     } catch (e) {
-      debugPrint('Erreur lors de la récupération du profil: $e');
+      SupabaseConfig.logError(
+        'Erreur lors de la récupération du profil utilisateur',
+        e,
+      );
       return null;
     }
   }
 
-  Future<bool> updateUserProfile({
-    String? username,
-    String? avatarUrl,
-    Map<String, dynamic>? additionalData,
-  }) async {
+  Future<bool> updateUserProfile(Map<String, dynamic> userData) async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return false;
-
-      final existingProfile = await supabase
-          .from(_tableName)
-          .select()
-          .eq('user_id', userId);
-
-      final Map<String, dynamic> updateData = {};
-
-      if (username != null) updateData['username'] = username;
-      if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
-      if (additionalData != null) updateData.addAll(additionalData);
-      updateData['updated_at'] = DateTime.now().toIso8601String();
-
-      if (existingProfile.isEmpty) {
-        updateData['user_id'] = userId;
-        updateData['created_at'] = DateTime.now().toIso8601String();
-        await supabase.from(_tableName).insert(updateData);
-      } else {
-        await supabase
-            .from(_tableName)
-            .update(updateData)
-            .eq('user_id', userId);
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        throw Exception('Utilisateur non connecté');
       }
+
+      await supabase
+          .from(SupabaseConfig.userProfileTable)
+          .update(userData)
+          .eq('id', userId);
 
       return true;
     } catch (e) {
-      debugPrint('Erreur lors de la mise à jour du profil: $e');
+      SupabaseConfig.logError(
+        'Erreur lors de la mise à jour du profil utilisateur',
+        e,
+      );
       return false;
     }
   }
 
-  Future<String?> uploadAvatar(List<int> fileBytes, String fileName) async {
+  Future<String?> updateProfilePicture(
+    List<int> fileBytes,
+    String fileExt,
+  ) async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return null;
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        throw Exception('Utilisateur non connecté');
+      }
 
-      final String fileExt = fileName.split('.').last;
-      final String filePath = 'avatars/$userId/avatar.$fileExt';
-
-      await supabase.storage.from('avatars').remove(['$userId/']);
+      final String filePath = 'profile_pictures/$userId.$fileExt';
+      // Uploader l'image
       await supabase.storage
           .from('avatars')
           .uploadBinary(
@@ -86,63 +77,68 @@ class SupabaseUserProfileService {
           .from('avatars')
           .getPublicUrl(filePath);
 
-      await updateUserProfile(avatarUrl: publicUrl);
+      await updateUserProfile({'profile_picture': publicUrl});
 
       return publicUrl;
     } catch (e) {
-      debugPrint('Erreur lors de l\'upload de l\'avatar: $e');
+      SupabaseConfig.logError(
+        'Erreur lors de la mise à jour de la photo de profil',
+        e,
+      );
       return null;
     }
   }
 
-  Future<List<Map<String, dynamic>>> getPreferences() async {
+  Future<Map<String, dynamic>?> getUserPreferences() async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return [];
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        throw Exception('Utilisateur non connecté');
+      }
 
-      final data = await supabase
-          .from('user_preferences')
-          .select()
-          .eq('user_id', userId);
+      final response =
+          await supabase
+              .from(SupabaseConfig.userPreferencesTable)
+              .select()
+              .eq('user_id', userId)
+              .maybeSingle();
 
-      return List<Map<String, dynamic>>.from(data);
+      return response;
     } catch (e) {
-      debugPrint('Erreur lors de la récupération des préférences: $e');
-      return [];
+      SupabaseConfig.logError(
+        'Erreur lors de la récupération des préférences utilisateur',
+        e,
+      );
+      return null;
     }
   }
 
-  Future<bool> savePreference({
-    required String key,
-    required dynamic value,
-  }) async {
+  Future<bool> updateUserPreferences(Map<String, dynamic> preferences) async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return false;
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        throw Exception('Utilisateur non connecté');
+      }
 
-      final existingPrefs = await supabase
-          .from('user_preferences')
-          .select()
-          .eq('user_id', userId)
-          .eq('key', key);
+      final data = {...preferences, 'user_id': userId};
 
-      if (existingPrefs.isEmpty) {
-        await supabase.from('user_preferences').insert({
-          'user_id': userId,
-          'key': key,
-          'value': value,
-        });
-      } else {
+      final existingPrefs = await getUserPreferences();
+
+      if (existingPrefs != null) {
         await supabase
-            .from('user_preferences')
-            .update({'value': value})
-            .eq('user_id', userId)
-            .eq('key', key);
+            .from(SupabaseConfig.userPreferencesTable)
+            .update(data)
+            .eq('user_id', userId);
+      } else {
+        await supabase.from(SupabaseConfig.userPreferencesTable).insert(data);
       }
 
       return true;
     } catch (e) {
-      debugPrint('Erreur lors de la sauvegarde de la préférence: $e');
+      SupabaseConfig.logError(
+        'Erreur lors de la mise à jour des préférences utilisateur',
+        e,
+      );
       return false;
     }
   }

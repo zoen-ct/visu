@@ -80,6 +80,16 @@ class AppRouter {
           GoRoute(
             path: '/movies',
             builder: (context, state) => const MoviesScreen(),
+            routes: [
+              GoRoute(
+                path: 'detail/:id',
+                builder: (context, state) {
+                  final id =
+                      int.tryParse(state.pathParameters['id'] ?? '') ?? 0;
+                  return MovieDetailScreen(movieId: id);
+                },
+              ),
+            ],
           ),
 
           GoRoute(

@@ -5,10 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '/visu.dart';
 
 class EpisodeDetailScreen extends StatefulWidget {
-  final int serieId;
-  final int seasonNumber;
-  final int episodeNumber;
-  final String serieName;
 
   const EpisodeDetailScreen({
     super.key,
@@ -17,6 +13,11 @@ class EpisodeDetailScreen extends StatefulWidget {
     required this.episodeNumber,
     required this.serieName,
   });
+  
+  final int serieId;
+  final int seasonNumber;
+  final int episodeNumber;
+  final String serieName;
 
   @override
   State<EpisodeDetailScreen> createState() => _EpisodeDetailScreenState();
@@ -24,6 +25,7 @@ class EpisodeDetailScreen extends StatefulWidget {
 
 class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
   final TMDbService _tmdbService = TMDbService();
+  final SupabaseHistoryService _historyService = SupabaseHistoryService();
   late Future<Episode> _episodeFuture;
   bool _isWatched = false;
   bool _isLoading = false;
@@ -44,12 +46,21 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
   }
 
   Future<void> _checkIfEpisodeIsWatched() async {
-    final episode = await _episodeFuture;
-    final isWatched = await _tmdbService.isEpisodeWatched(episode.id);
-    if (mounted) {
-      setState(() {
-        _isWatched = isWatched;
-      });
+    try {
+      final isWatched = await _historyService.isWatched(
+        itemId: widget.serieId,
+        mediaType: MediaType.tv,
+        seasonNumber: widget.seasonNumber,
+        episodeNumber: widget.episodeNumber,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isWatched = isWatched;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de la vérification si l\'épisode est vu: $e');
     }
   }
 
@@ -61,8 +72,14 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
     });
 
     try {
-      final success = await _tmdbService.markEpisodeAsWatched(
-        episode.id,
+      final success = await _historyService.markAsWatched(
+        itemId: widget.serieId,
+        mediaType: MediaType.tv,
+        seasonNumber: widget.seasonNumber,
+        episodeNumber: widget.episodeNumber,
+        title:
+            '${widget.serieName} - S${widget.seasonNumber}E${widget.episodeNumber} - ${episode.name}',
+        posterPath: episode.stillPath,
         watched: !_isWatched,
       );
 
@@ -70,6 +87,17 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
         setState(() {
           _isWatched = !_isWatched;
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isWatched
+                  ? 'Épisode marqué comme vu'
+                  : 'Épisode marqué comme non vu',
+            ),
+            backgroundColor: const Color(0xFF16232E),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

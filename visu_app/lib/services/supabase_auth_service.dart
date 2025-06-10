@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '/services/supabase_initializer.dart';
+import 'supabase_config.dart';
+import 'supabase_initializer.dart';
 
 class SupabaseAuthService {
+
   SupabaseAuthService() {
     supabase.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
@@ -17,17 +18,28 @@ class SupabaseAuthService {
       }
     });
   }
-
   final StreamController<bool> _authStateController =
       StreamController<bool>.broadcast();
-
   Stream<bool> get authStateChanges => _authStateController.stream;
 
-  User? get currentUser => supabase.auth.currentUser;
+  bool get isLoggedIn => supabase.auth.currentSession != null;
 
-  Session? get currentSession => supabase.auth.currentSession;
+  Future<AuthResponse> signIn({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
-  bool get isLoggedIn => currentUser != null;
+      return response;
+    } catch (e) {
+      SupabaseConfig.logError('Erreur lors de la connexion', e);
+      rethrow;
+    }
+  }
 
   Future<AuthResponse> signUp({
     required String email,
@@ -42,33 +54,17 @@ class SupabaseAuthService {
       );
 
       if (response.user != null) {
-        await supabase.from('user_profile').insert({
-          'user_id': response.user!.id,
-          'username':
-              email
-                  .split('@')
-                  .first,
+        await supabase.from(SupabaseConfig.userProfileTable).insert({
+          'id': response.user!.id,
+          'email': email,
+          'name': userData?['name'] ?? email.split('@').first,
           'created_at': DateTime.now().toIso8601String(),
         });
       }
 
       return response;
     } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<AuthResponse> signIn({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final response = await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-      return response;
-    } catch (e) {
+      SupabaseConfig.logError('Erreur lors de l\'inscription', e);
       rethrow;
     }
   }
@@ -77,30 +73,42 @@ class SupabaseAuthService {
     try {
       await supabase.auth.signOut();
     } catch (e) {
-      debugPrint('Erreur lors de la déconnexion: $e');
+      SupabaseConfig.logError('Erreur lors de la déconnexion', e);
       rethrow;
     }
   }
+
+  Future<User?> getCurrentUser() async {
+    return supabase.auth.currentUser;
+  }
+
+  String? get currentUserId => supabase.auth.currentUser?.id;
 
   Future<void> resetPassword(String email) async {
     try {
       await supabase.auth.resetPasswordForEmail(email);
     } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de la réinitialisation du mot de passe',
+        e,
+      );
       rethrow;
     }
   }
 
-  Future<Map<String, dynamic>> updateUserProfile({
-    String? email,
-    Map<String, dynamic>? data,
-  }) async {
+  Future<void> updatePassword(String newPassword) async {
     try {
-      final response = await supabase.auth.updateUser(
-        UserAttributes(email: email, data: data),
-      );
-      return response.user!.userMetadata!;
+      await supabase.auth.updateUser(UserAttributes(password: newPassword));
     } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de la mise à jour du mot de passe',
+        e,
+      );
       rethrow;
     }
+  }
+
+  void dispose() {
+    _authStateController.close();
   }
 }

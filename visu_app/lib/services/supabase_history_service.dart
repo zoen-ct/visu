@@ -1,71 +1,7 @@
-import 'package:flutter/material.dart';
-
 import '/visu.dart';
 
 class SupabaseHistoryService {
-  final String _tableName = SupabaseConfig.historyTable;
-
-  Future<bool> markAsWatched({
-    required int itemId,
-    required MediaType mediaType,
-    int? seasonNumber,
-    int? episodeNumber,
-    String? title,
-    String? posterPath,
-    bool watched = true,
-  }) async {
-    try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return false;
-
-      if (watched) {
-        final existingData = await supabase
-            .from(_tableName)
-            .select()
-            .eq('user_id', userId)
-            .eq('item_id', itemId)
-            .eq('type', mediaType.name)
-            .eq('season_number', seasonNumber!)
-            .eq('episode_number', episodeNumber!);
-
-        if (existingData.isEmpty) {
-          await supabase.from(_tableName).insert({
-            'user_id': userId,
-            'item_id': itemId,
-            'type': mediaType.name,
-            'season_number': seasonNumber,
-            'episode_number': episodeNumber,
-            'title': title,
-            'poster_path': posterPath,
-            'watched_at': DateTime.now().toIso8601String(),
-          });
-        } else {
-          await supabase
-              .from(_tableName)
-              .update({'watched_at': DateTime.now().toIso8601String()})
-              .eq('user_id', userId)
-              .eq('item_id', itemId)
-              .eq('type', mediaType.name)
-              .eq('season_number', seasonNumber)
-              .eq('episode_number', episodeNumber);
-        }
-      } else {
-        await supabase
-            .from(_tableName)
-            .delete()
-            .eq('user_id', userId)
-            .eq('item_id', itemId)
-            .eq('type', mediaType.name)
-            .eq('season_number', seasonNumber!)
-            .eq('episode_number', episodeNumber!);
-      }
-
-      return true;
-    } catch (e) {
-      debugPrint('Erreur lors de la mise à jour de l\'historique: $e');
-      return false;
-    }
-  }
+  final SupabaseAuthService _authService = SupabaseAuthService();
 
   Future<bool> isWatched({
     required int itemId,
@@ -74,58 +10,189 @@ class SupabaseHistoryService {
     int? episodeNumber,
   }) async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return false;
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        return false;
+      }
 
-      var query = supabase
-          .from(_tableName)
+      final query = supabase
+          .from(SupabaseConfig.historyTable)
           .select()
           .eq('user_id', userId)
           .eq('item_id', itemId)
           .eq('type', mediaType.name);
 
-      if (seasonNumber != null) {
-        query = query.eq('season_number', seasonNumber);
+      if (mediaType == MediaType.tv &&
+          seasonNumber != null &&
+          episodeNumber != null) {
+        final result =
+            await query
+                .eq('season_number', seasonNumber)
+                .eq('episode_number', episodeNumber)
+                .maybeSingle();
+        return result != null;
+      } else {
+        final result = await query.maybeSingle();
+        return result != null;
       }
-
-      if (episodeNumber != null) {
-        query = query.eq('episode_number', episodeNumber);
-      }
-
-      final data = await query;
-      return data.isNotEmpty;
     } catch (e) {
-      debugPrint('Erreur lors de la vérification de l\'historique: $e');
+      SupabaseConfig.logError(
+        'Erreur lors de la vérification de l\'historique',
+        e,
+      );
       return false;
     }
   }
 
-  Future<List<Map<String, dynamic>>> getHistory({
-    MediaType? mediaType,
-    int limit = 20,
-    int offset = 0,
+  Future<bool> markAsWatched({
+    required int itemId,
+    required MediaType mediaType,
+    String? title,
+    String? posterPath,
+    int? seasonNumber,
+    int? episodeNumber,
+    required bool watched,
   }) async {
     try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return [];
-
-      final query = supabase
-        .from(_tableName)
-        .select()
-        .eq('user_id', userId);
-
-      if (mediaType != null) {
-        query.eq('type', mediaType.name);
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        throw Exception('Utilisateur non connecté');
       }
 
-      query.order('watched_at', ascending: false)
-        .range(offset, offset + limit - 1);
+      if (!watched) {
+        final query = supabase
+            .from(SupabaseConfig.historyTable)
+            .delete()
+            .eq('user_id', userId)
+            .eq('item_id', itemId)
+            .eq('type', mediaType.name);
 
-      final data = await query;
-      return List<Map<String, dynamic>>.from(data);
+        if (mediaType == MediaType.tv &&
+            seasonNumber != null &&
+            episodeNumber != null) {
+          await query
+              .eq('season_number', seasonNumber)
+              .eq('episode_number', episodeNumber);
+        } else {
+          await query;
+        }
+
+        return true;
+      }
+
+      final alreadyWatched = await isWatched(
+        itemId: itemId,
+        mediaType: mediaType,
+        seasonNumber: seasonNumber,
+        episodeNumber: episodeNumber,
+      );
+
+      if (alreadyWatched) {
+        return true;
+      }
+
+      final historyEntry = {
+        'user_id': userId,
+        'item_id': itemId,
+        'type': mediaType.name,
+        'title': title,
+        'poster_path': posterPath,
+        'watched_at': DateTime.now().toIso8601String(),
+      };
+
+      if (mediaType == MediaType.tv &&
+          seasonNumber != null &&
+          episodeNumber != null) {
+        historyEntry['season_number'] = seasonNumber;
+        historyEntry['episode_number'] = episodeNumber;
+      }
+
+      await supabase.from(SupabaseConfig.historyTable).insert(historyEntry);
+
+      return true;
     } catch (e) {
-      debugPrint('Erreur lors de la récupération de l\'historique: $e');
+      SupabaseConfig.logError(
+        'Erreur lors de la mise à jour de l\'historique',
+        e,
+      );
+      return false;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getHistory() async {
+    try {
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        return [];
+      }
+
+      final result = await supabase
+          .from(SupabaseConfig.historyTable)
+          .select()
+          .eq('user_id', userId)
+          .order('watched_at', ascending: false);
+
+      return result;
+    } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de la récupération de l\'historique',
+        e,
+      );
       return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getHistoryByType(
+    MediaType mediaType,
+  ) async {
+    try {
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        return [];
+      }
+
+      final result = await supabase
+          .from(SupabaseConfig.historyTable)
+          .select()
+          .eq('user_id', userId)
+          .eq('type', mediaType.name)
+          .order('watched_at', ascending: false);
+
+      return result;
+    } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de la récupération de l\'historique par type',
+        e,
+      );
+      return [];
+    }
+  }
+
+  Future<bool> clearHistory({MediaType? mediaType}) async {
+    try {
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        throw Exception('Utilisateur non connecté');
+      }
+
+      final query = supabase
+          .from(SupabaseConfig.historyTable)
+          .delete()
+          .eq('user_id', userId);
+
+      if (mediaType != null) {
+        await query.eq('type', mediaType.name);
+      } else {
+        await query;
+      }
+
+      return true;
+    } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de la suppression de l\'historique',
+        e,
+      );
+      return false;
     }
   }
 }

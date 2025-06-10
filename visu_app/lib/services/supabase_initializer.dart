@@ -1,18 +1,28 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '/visu.dart';
+import 'supabase_config.dart';
 
 late final SupabaseClient supabase;
 
 class SupabaseInitializer {
   static Future<void> initialize() async {
-    await Supabase.initialize(
-      url: SupabaseConfig.supabaseUrl,
-      anonKey: SupabaseConfig.supabaseAnonKey,
-      debug: kDebugMode,
-    );
+    try {
+      await Supabase.initialize(
+        url: SupabaseConfig.supabaseUrl,
+        anonKey: SupabaseConfig.supabaseAnonKey,
+        debug: true,
+      );
 
-    supabase = Supabase.instance.client;
+      supabase = Supabase.instance.client;
+
+      debugPrint('Supabase initialisé avec succès');
+    } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de l\'initialisation de Supabase',
+        e,
+      );
+      rethrow;
+    }
   }
 }
