@@ -128,10 +128,32 @@ class _SeriesScreenState extends State<SeriesScreen>
     }
 
     if (_watchlist == null || _watchlist!.isEmpty) {
-      return const Center(
-        child: Text(
-          'Aucune série disponible',
-          style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Aucune série disponible',
+              style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => context.push('/search'),
+              icon: const Icon(Icons.search),
+              label: const Text('Chercher des séries'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF8C13A),
+                foregroundColor: const Color(0xFF16232E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -186,10 +208,32 @@ class _SeriesScreenState extends State<SeriesScreen>
     }
 
     if (_upcoming == null || _upcoming!.isEmpty) {
-      return const Center(
-        child: Text(
-          'Aucune série à venir',
-          style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Aucune série à venir',
+              style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => context.push('/search'),
+              icon: const Icon(Icons.search),
+              label: const Text('Chercher des séries'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF8C13A),
+                foregroundColor: const Color(0xFF16232E),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
