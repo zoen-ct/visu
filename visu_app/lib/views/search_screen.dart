@@ -135,6 +135,9 @@ class _SearchScreenState extends State<SearchScreen> {
       backgroundColor: const Color(0xFF16232E),
       appBar: AppBar(
         backgroundColor: const Color(0xFF16232E),
+        // Ajouter ces propriétés pour maintenir la couleur pendant le scroll
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         title: const Text(
           'Recherche',
           style: TextStyle(color: Color(0xFFF8C13A)),
@@ -245,8 +248,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: _searchResults.length,
+      itemCount: _searchResults.length + 1, // +1 pour la marge en bas
       itemBuilder: (context, index) {
+        if (index == _searchResults.length) {
+          // Ajouter une marge en bas pour permettre un meilleur défilement
+          return const SizedBox(height: 100);
+        }
         final result = _searchResults[index];
         return _buildSearchResultCard(result);
       },
@@ -343,6 +350,9 @@ class _SearchScreenState extends State<SearchScreen> {
               },
             ),
           ),
+
+          // Ajouter une marge en bas pour permettre un meilleur défilement
+          const SizedBox(height: 100),
         ],
       ],
     );

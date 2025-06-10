@@ -479,6 +479,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
               );
             }),
           ],
+
+          const SizedBox(height: 100),
         ],
       ),
     );
@@ -490,8 +492,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
       backgroundColor: const Color(0xFF16232E),
       appBar: AppBar(
         backgroundColor: const Color(0xFF16232E),
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         title: const Text(
-          'Mes séries',
+          'Mes Séries',
           style: TextStyle(
             color: Color(0xFFF8C13A),
             fontWeight: FontWeight.bold,

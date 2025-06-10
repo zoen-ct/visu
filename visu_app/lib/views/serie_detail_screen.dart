@@ -763,6 +763,9 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
                     expandedHeight: 250,
                     pinned: true,
                     backgroundColor: const Color(0xFF16232E),
+                    // Ajouter cette propriété pour maintenir la couleur pendant le scroll
+                    surfaceTintColor: Colors.transparent,
+                    scrolledUnderElevation: 0,
                     flexibleSpace: FlexibleSpaceBar(
                       background:
                           _tvShowDetails!.backdropPath.isNotEmpty

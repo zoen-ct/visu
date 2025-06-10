@@ -518,6 +518,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                     expandedHeight: 250,
                     pinned: true,
                     backgroundColor: const Color(0xFF16232E),
+                    surfaceTintColor: Colors.transparent,
+                    scrolledUnderElevation: 0,
                     flexibleSpace: FlexibleSpaceBar(
                       background:
                           _movieDetails!['backdrop_path'] != null

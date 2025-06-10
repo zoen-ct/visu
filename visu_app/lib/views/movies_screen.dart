@@ -176,8 +176,12 @@ class _MoviesScreenState extends State<MoviesScreen> {
       color: const Color(0xFFF8C13A),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        itemCount: _watchlistMovies!.length,
+        itemCount: _watchlistMovies!.length + 1, // +1 pour la marge en bas
         itemBuilder: (context, index) {
+          if (index == _watchlistMovies!.length) {
+            // Ajouter une marge en bas pour permettre un meilleur défilement
+            return const SizedBox(height: 100);
+          }
           final movie = _watchlistMovies![index];
           return MovieCard(
             movie: movie,
@@ -194,6 +198,9 @@ class _MoviesScreenState extends State<MoviesScreen> {
       backgroundColor: const Color(0xFF16232E),
       appBar: AppBar(
         backgroundColor: const Color(0xFF16232E),
+        // Ajouter ces propriétés pour maintenir la couleur pendant le scroll
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         title: const Text(
           'Mes Films',
           style: TextStyle(
