@@ -372,9 +372,12 @@ class TMDbService {
 
   // ===== COMMON OPERATIONS =====
 
-  String getImageUrl(String path, {String size = TMDbConfig.posterSize}) {
-    if (path.isEmpty) return '';
-    return '$imageBaseUrl$size$path';
+  String getImageUrl(String? path, {String size = TMDbConfig.posterSize}) {
+    if (path == null || path.isEmpty) return '';
+
+    final String cleanPath = path.startsWith('/') ? path : '/$path';
+
+    return '$imageBaseUrl$size$cleanPath';
   }
 
   Future<bool> addToFavorites(int mediaId) async {

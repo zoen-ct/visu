@@ -46,9 +46,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       });
 
       final detailsJson = await _tmdbService.getMovieDetails(widget.movieId);
-      final creditsJson = await _tmdbService.getCredits(widget.movieId, mediaType: MediaType.movie);
+      final creditsJson = await _tmdbService.getCredits(
+        widget.movieId,
+        mediaType: MediaType.movie,
+      );
 
-      // Fusion des détails et des crédits
       final Map<String, dynamic> details = {
         ...detailsJson,
         'credits': creditsJson,
@@ -277,10 +279,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
             child:
                 profilePath != null && profilePath.isNotEmpty
                     ? CachedNetworkImage(
-                      imageUrl: _tmdbService.getImageUrl(
-                        profilePath,
-                        size: TMDbConfig.profileSize,
-                      ),
+                      imageUrl: 'https://image.tmdb.org/t/p/w185$profilePath',
                       width: 80,
                       height: 80,
                       fit: BoxFit.cover,
@@ -391,10 +390,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                       background:
                           _movieDetails!['backdrop_path'] != null
                               ? CachedNetworkImage(
-                                imageUrl: _tmdbService.getImageUrl(
-                                  _movieDetails!['backdrop_path'],
-                                  size: TMDbConfig.backdropSize,
-                                ),
+                                imageUrl:
+                                    'https://image.tmdb.org/t/p/w1280${_movieDetails!['backdrop_path']}',
                                 fit: BoxFit.cover,
                                 placeholder:
                                     (context, url) => Container(
@@ -430,6 +427,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                         ),
                       ),
                     ),
+                    iconTheme: const IconThemeData(color: Color(0xFFF4F6F8)),
                     actions: [
                       IconButton(
                         icon:
@@ -498,9 +496,8 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: CachedNetworkImage(
-                                    imageUrl: _tmdbService.getImageUrl(
-                                      _movieDetails!['poster_path'],
-                                    ),
+                                    imageUrl:
+                                        'https://image.tmdb.org/t/p/w500${_movieDetails!['poster_path']}',
                                     width: 120,
                                     height: 180,
                                     fit: BoxFit.cover,
