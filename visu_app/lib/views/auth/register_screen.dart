@@ -49,7 +49,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      // Inscription avec Supabase
       final response = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
