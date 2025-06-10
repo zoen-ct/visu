@@ -125,13 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     if (result.mediaType == MediaType.tv) {
       context.push('/series/detail/${result.id}');
     } else if (result.mediaType == MediaType.movie) {
-      // @TODO : Pour les films (à implémenter)
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Détails des films à implémenter'),
-          backgroundColor: Color(0xFF16232E),
-        ),
-      );
+      context.push('/movies/detail/${result.id}');
     }
   }
 

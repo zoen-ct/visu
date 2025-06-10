@@ -17,14 +17,19 @@ class _SearchScreenState extends State<SearchScreen> {
   final TMDbService _tmdbService = TMDbService();
   Timer? _debounce;
   bool _isLoading = false;
+  bool _isLoadingTrending = false;
   String _searchQuery = '';
   List<SearchResult> _searchResults = [];
+  List<dynamic> _trendingSeries = [];
+  List<dynamic> _trendingMovies = [];
   String? _errorMessage;
+  String? _trendingErrorMessage;
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadTrendingContent();
   }
 
   @override
@@ -33,6 +38,36 @@ class _SearchScreenState extends State<SearchScreen> {
     _searchController.dispose();
     _debounce?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadTrendingContent() async {
+    setState(() {
+      _isLoadingTrending = true;
+      _trendingErrorMessage = null;
+    });
+
+    try {
+      // Charger les séries tendances
+      final trendingSeries = await _tmdbService.getTrendingSeries();
+
+      // Charger les films tendances
+      final trendingMovies = await _tmdbService.getTrendingMovies();
+
+      if (mounted) {
+        setState(() {
+          _trendingSeries = trendingSeries;
+          _trendingMovies = trendingMovies;
+          _isLoadingTrending = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _trendingErrorMessage = 'Erreur lors du chargement des tendances: $e';
+          _isLoadingTrending = false;
+        });
+      }
+    }
   }
 
   void _onSearchChanged() {
@@ -81,14 +116,17 @@ class _SearchScreenState extends State<SearchScreen> {
     if (result.mediaType == MediaType.tv) {
       context.push('/series/detail/${result.id}');
     } else if (result.mediaType == MediaType.movie) {
-      // @TODO : Naviguer vers la page détail du film (à implémenter)
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Navigation vers les détails du film à implémenter'),
-          backgroundColor: Color(0xFF16232E),
-        ),
-      );
+      context.push('/movies/detail/${result.id}');
     }
+  }
+
+  void _navigateToSerieDetail(dynamic serie) {
+    context.push('/series/detail/${serie.id}');
+  }
+
+  void _navigateToMovieDetail(dynamic movie) {
+    final int id = movie['id'] ?? 0;
+    context.push('/movies/detail/$id');
   }
 
   @override
@@ -182,20 +220,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     if (_searchResults.isEmpty) {
       if (_searchQuery.isEmpty) {
-        return const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.search, color: Color(0xFFF8C13A), size: 64),
-              SizedBox(height: 16),
-              Text(
-                'Recherchez vos films et séries préférés',
-                style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
+        return _buildTrendingContent();
       } else {
         return Center(
           child: Column(
@@ -225,6 +250,282 @@ class _SearchScreenState extends State<SearchScreen> {
         final result = _searchResults[index];
         return _buildSearchResultCard(result);
       },
+    );
+  }
+
+  Widget _buildTrendingContent() {
+    if (_isLoadingTrending) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF8C13A)),
+        ),
+      );
+    }
+
+    if (_trendingErrorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 16),
+            Text(
+              _trendingErrorMessage!,
+              style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _loadTrendingContent,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF8C13A),
+                foregroundColor: const Color(0xFF16232E),
+              ),
+              child: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      children: [
+        // Séries tendances
+        if (_trendingSeries.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Text(
+              'Séries tendances',
+              style: TextStyle(
+                color: Color(0xFFF8C13A),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: _trendingSeries.length,
+              itemBuilder: (context, index) {
+                final serie = _trendingSeries[index];
+                return _buildTrendingSerieCard(serie);
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+
+        // Films tendances
+        if (_trendingMovies.isNotEmpty) ...[
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Text(
+              'Films tendances',
+              style: TextStyle(
+                color: Color(0xFFF8C13A),
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              itemCount: _trendingMovies.length,
+              itemBuilder: (context, index) {
+                final movie = _trendingMovies[index];
+                return _buildTrendingMovieCard(movie);
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTrendingSerieCard(dynamic serie) {
+    final String title = serie.title ?? 'Sans titre';
+    final String imageUrl = serie.imageUrl ?? '';
+    final double rating = serie.rating ?? 0.0;
+
+    return GestureDetector(
+      onTap: () => _navigateToSerieDetail(serie),
+      child: Container(
+        width: 120,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image de la série
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child:
+                    imageUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          width: 120,
+                          placeholder:
+                              (_, __) => Container(
+                                color: Colors.grey[800],
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFFF8C13A),
+                                    ),
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                          errorWidget:
+                              (_, __, ___) => Container(
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.error,
+                                  color: Colors.white,
+                                ),
+                              ),
+                        )
+                        : Container(
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.tv, color: Colors.white),
+                        ),
+              ),
+            ),
+
+            // Titre de la série
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // Note de la série
+            if (rating > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, color: Color(0xFFF8C13A), size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      rating.toStringAsFixed(1),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrendingMovieCard(dynamic movie) {
+    final String title = movie['title'] ?? 'Sans titre';
+    final String posterPath = movie['poster_path'] ?? '';
+    final double voteAverage =
+        movie['vote_average'] != null
+            ? (movie['vote_average'] as num).toDouble()
+            : 0.0;
+    final String imageUrl =
+        posterPath.isNotEmpty
+            ? 'https://image.tmdb.org/t/p/w200$posterPath'
+            : '';
+
+    return GestureDetector(
+      onTap: () => _navigateToMovieDetail(movie),
+      child: Container(
+        width: 120,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image du film
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child:
+                    imageUrl.isNotEmpty
+                        ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          width: 120,
+                          placeholder:
+                              (_, __) => Container(
+                                color: Colors.grey[800],
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFFF8C13A),
+                                    ),
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                          errorWidget:
+                              (_, __, ___) => Container(
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.error,
+                                  color: Colors.white,
+                                ),
+                              ),
+                        )
+                        : Container(
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.movie, color: Colors.white),
+                        ),
+              ),
+            ),
+
+            // Titre du film
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // Note du film
+            if (voteAverage > 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, color: Color(0xFFF8C13A), size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      voteAverage.toStringAsFixed(1),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
