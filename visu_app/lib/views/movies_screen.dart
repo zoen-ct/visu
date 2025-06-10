@@ -161,13 +161,93 @@ class _MoviesScreenState extends State<MoviesScreen> {
       onRefresh: _loadWatchlistMovies,
       color: const Color(0xFFF8C13A),
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.all(16),
         itemCount: _watchlistMovies!.length,
         itemBuilder: (context, index) {
           final movie = _watchlistMovies![index];
-          return MovieCard(
-            movie: movie,
-            onTap: () => _navigateToMovieDetail(movie),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: InkWell(
+                onTap: () => _navigateToMovieDetail(movie),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      // Image du film
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          'https://image.tmdb.org/t/p/w92${movie.posterPath}',
+                          width: 60,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          errorBuilder:
+                              (context, error, stackTrace) => Container(
+                                width: 60,
+                                height: 90,
+                                color: Colors.grey[200],
+                                child: const Icon(
+                                  Icons.movie,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Informations du film
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              movie.title,
+                              style: const TextStyle(
+                                color: Color(0xFF16232E),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              movie.overview,
+                              style: TextStyle(
+                                color: Colors.grey[700],
+                                fontSize: 14,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Bouton à voir
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF16232E),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(
+                          Icons.check_circle,
+                          color: Color(0xFFF8C13A),
+                          size: 24,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           );
         },
       ),
