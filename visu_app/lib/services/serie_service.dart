@@ -6,10 +6,11 @@ class SerieService {
   final TMDbService _tmdbService = TMDbService();
   final SupabaseHistoryService _historyService = SupabaseHistoryService();
   final SupabaseFavoritesService _favoritesService = SupabaseFavoritesService();
+  final SupabaseWatchlistService _watchlistService = SupabaseWatchlistService();
 
   Future<List<Serie>> getWatchlist() async {
     try {
-      final watchlistItems = await _historyService.getHistoryByType(
+      final watchlistItems = await _watchlistService.getWatchlistByType(
         MediaType.tv,
       );
 

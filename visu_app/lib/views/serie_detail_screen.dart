@@ -52,9 +52,8 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
       });
 
       final detailsJson = await _tmdbService.getTvShowDetails(widget.serieId);
-      final details = TvShowDetails.fromJson(
-        detailsJson as Map<String, dynamic>,
-      );
+
+      final details = detailsJson;
 
       if (mounted) {
         setState(() {
@@ -65,7 +64,8 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Erreur lors du chargement des détails de la série';
+          _errorMessage =
+              'Erreur lors du chargement des détails de la série $e';
           _isLoading = false;
         });
       }
