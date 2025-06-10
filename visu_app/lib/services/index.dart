@@ -9,4 +9,5 @@ export 'supabase_initializer.dart';
 export 'supabase_auth_service.dart';
 export 'supabase_favorites_service.dart';
 export 'supabase_history_service.dart';
+export 'supabase_watchlist_service.dart';
 export 'supabase_user_profile_service.dart';

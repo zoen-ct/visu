@@ -14,8 +14,7 @@ class SerieDetailScreen extends StatefulWidget {
   State<SerieDetailScreen> createState() => _SerieDetailScreenState();
 }
 
-class _SerieDetailScreenState extends State<SerieDetailScreen>
-    with SingleTickerProviderStateMixin {
+class _SerieDetailScreenState extends State<SerieDetailScreen> {
   late TMDbService _tmdbService;
   late SupabaseFavoritesService _favoritesService;
   late SupabaseHistoryService _historyService;
@@ -29,24 +28,15 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
   bool _isFavoriteLoading = false;
   bool _isWatchlistLoading = false;
 
-  late TabController _tabController;
-
   @override
   void initState() {
     super.initState();
     _tmdbService = TMDbService();
     _favoritesService = SupabaseFavoritesService();
     _historyService = SupabaseHistoryService();
-    _tabController = TabController(length: 2, vsync: this);
     _loadTvShowDetails();
     _checkFavoriteStatus();
     _checkWatchlistStatus();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadTvShowDetails() async {
@@ -236,171 +226,52 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
     }
   }
 
-  Widget _buildOverviewTab() {
-    if (_tvShowDetails == null) {
-      return const Center(
-        child: Text(
-          'Aucune information disponible',
-          style: TextStyle(color: Color(0xFFF4F6F8)),
-        ),
-      );
-    }
-
-    final details = _tvShowDetails!;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Synopsis',
-            style: TextStyle(
-              color: Color(0xFFF8C13A),
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            details.overview.isNotEmpty
-                ? details.overview
-                : 'Aucun synopsis disponible',
-            style: const TextStyle(
-              color: Color(0xFFF4F6F8),
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          const Text(
-            'Informations',
-            style: TextStyle(
-              color: Color(0xFFF8C13A),
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildInfoRow(
-            'Première diffusion',
-            _formatDate(details.firstAirDate),
-          ),
-          _buildInfoRow('Dernière diffusion', _formatDate(details.lastAirDate)),
-          _buildInfoRow('Nombre de saisons', '${details.numberOfSeasons}'),
-          _buildInfoRow('Nombre d\'épisodes', '${details.numberOfEpisodes}'),
-          _buildInfoRow('Statut', details.status),
-
-          const SizedBox(height: 24),
-
-          if (details.creators.isNotEmpty) ...[
-            const Text(
-              'Créateurs',
-              style: TextStyle(
-                color: Color(0xFFF8C13A),
-                fontSize: 20,
+          SizedBox(
+            width: 140,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFFF4F6F8),
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 120,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: details.creators.length,
-                itemBuilder: (context, index) {
-                  final creator = details.creators[index];
-                  return _buildPersonCard(
-                    name: creator.name,
-                    role: 'Créateur',
-                    profilePath: creator.profilePath,
-                  );
-                },
-              ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(color: Colors.grey[300], fontSize: 14),
             ),
-            const SizedBox(height: 24),
-          ],
-
-          if (details.cast.isNotEmpty) ...[
-            const Text(
-              'Casting',
-              style: TextStyle(
-                color: Color(0xFFF8C13A),
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 160,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: details.cast.length,
-                itemBuilder: (context, index) {
-                  final actor = details.cast[index];
-                  return _buildPersonCard(
-                    name: actor.name,
-                    role: actor.character,
-                    profilePath: actor.profilePath,
-                  );
-                },
-              ),
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSeasonsTab() {
-    if (_tvShowDetails == null || _tvShowDetails!.seasons.isEmpty) {
-      return const Center(
-        child: Text(
-          'Aucune saison disponible',
-          style: TextStyle(color: Color(0xFFF4F6F8)),
-        ),
-      );
-    }
-
-    final seasons =
-        _tvShowDetails!.seasons.where((s) => s.seasonNumber > 0).toList();
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: seasons.length,
-      itemBuilder: (context, index) {
-        final season = seasons[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          color: const Color(0xFF1D2F3E),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: ExpansionTile(
-            collapsedIconColor: const Color(0xFFF8C13A),
-            iconColor: const Color(0xFFF8C13A),
-            tilePadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            childrenPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            title: Row(
-              children: [
-                if (season.posterPath.isNotEmpty) ...[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: _tmdbService.getImageUrl(
-                        season.posterPath,
-                        size: TMDbConfig.profileSize,
-                      ),
-                      width: 60,
-                      height: 90,
+  Widget _buildPersonCard({
+    required String name,
+    required String role,
+    required String profilePath,
+  }) {
+    return Container(
+      width: 100,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child:
+                profilePath.isNotEmpty
+                    ? CachedNetworkImage(
+                      imageUrl: 'https://image.tmdb.org/t/p/w185${profilePath}',
+                      width: 80,
+                      height: 80,
                       fit: BoxFit.cover,
                       placeholder:
                           (context, url) => Container(
@@ -415,62 +286,181 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                       errorWidget:
                           (context, url, error) => Container(
                             color: Colors.grey[800],
-                            child: const Icon(Icons.error, color: Colors.red),
+                            child: const Icon(
+                              Icons.person,
+                              color: Colors.white54,
+                            ),
                           ),
+                    )
+                    : Container(
+                      width: 80,
+                      height: 80,
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.person, color: Colors.white54),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        season.name,
-                        style: const TextStyle(
-                          color: Color(0xFFF4F6F8),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            name,
+            style: const TextStyle(
+              color: Color(0xFFF4F6F8),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            role,
+            style: TextStyle(color: Colors.grey[400], fontSize: 10),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeasons() {
+    if (_tvShowDetails == null || _tvShowDetails!.seasons.isEmpty) {
+      return const Center(
+        child: Text(
+          'Aucune saison disponible',
+          style: TextStyle(color: Color(0xFFF4F6F8)),
+        ),
+      );
+    }
+
+    final seasons =
+        _tvShowDetails!.seasons.where((s) => s.seasonNumber > 0).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Saisons',
+          style: TextStyle(
+            color: Color(0xFFF8C13A),
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          itemCount: seasons.length,
+          itemBuilder: (context, index) {
+            final season = seasons[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              color: const Color(0xFF1D2F3E),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ExpansionTile(
+                collapsedIconColor: const Color(0xFFF8C13A),
+                iconColor: const Color(0xFFF8C13A),
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                childrenPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                title: Row(
+                  children: [
+                    if (season.posterPath.isNotEmpty) ...[
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              'https://image.tmdb.org/t/p/w185${season.posterPath}',
+                          width: 60,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          placeholder:
+                              (context, url) => Container(
+                                color: Colors.grey[800],
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFFF8C13A),
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                          errorWidget:
+                              (context, url, error) => Container(
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.error,
+                                  color: Colors.red,
+                                ),
+                              ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${season.episodeCount} épisodes · ${_formatDate(season.airDate)}',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      ),
+                      const SizedBox(width: 16),
                     ],
-                  ),
-                ),
-              ],
-            ),
-            children: [
-              if (season.overview.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    season.overview,
-                    style: const TextStyle(
-                      color: Color(0xFFF4F6F8),
-                      fontSize: 14,
-                      height: 1.5,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            season.name,
+                            style: const TextStyle(
+                              color: Color(0xFFF4F6F8),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${season.episodeCount} épisodes · ${_formatDate(season.airDate)}',
+                            style: TextStyle(
+                              color: Colors.grey[400],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ],
+                ),
+                children: [
+                  if (season.overview.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        season.overview,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F6F8),
+                          fontSize: 14,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                  ElevatedButton(
+                    onPressed: () => _loadEpisodes(season.seasonNumber),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF8C13A),
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text('Voir les épisodes'),
                   ),
-                ),
-              ],
-              ElevatedButton(
-                onPressed: () => _loadEpisodes(season.seasonNumber),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF8C13A),
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: const Text('Voir les épisodes'),
+                  const SizedBox(height: 8),
+                ],
               ),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -591,107 +581,6 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
     }
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 140,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Color(0xFFF4F6F8),
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: Colors.grey[300], fontSize: 14),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPersonCard({
-    required String name,
-    required String role,
-    required String profilePath,
-  }) {
-    return Container(
-      width: 100,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child:
-                profilePath.isNotEmpty
-                    ? CachedNetworkImage(
-                      imageUrl: _tmdbService.getImageUrl(
-                        profilePath,
-                        size: TMDbConfig.profileSize,
-                      ),
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      placeholder:
-                          (context, url) => Container(
-                            color: Colors.grey[800],
-                            child: const Center(
-                              child: CircularProgressIndicator(
-                                color: Color(0xFFF8C13A),
-                                strokeWidth: 2,
-                              ),
-                            ),
-                          ),
-                      errorWidget:
-                          (context, url, error) => Container(
-                            color: Colors.grey[800],
-                            child: const Icon(
-                              Icons.person,
-                              color: Colors.white54,
-                            ),
-                          ),
-                    )
-                    : Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey[800],
-                      child: const Icon(Icons.person, color: Colors.white54),
-                    ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            name,
-            style: const TextStyle(
-              color: Color(0xFFF4F6F8),
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            role,
-            style: TextStyle(color: Colors.grey[400], fontSize: 10),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -748,10 +637,8 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                       background:
                           _tvShowDetails!.backdropPath.isNotEmpty
                               ? CachedNetworkImage(
-                                imageUrl: _tmdbService.getImageUrl(
-                                  _tvShowDetails!.backdropPath,
-                                  size: TMDbConfig.backdropSize,
-                                ),
+                                imageUrl:
+                                    'https://image.tmdb.org/t/p/w1280${_tvShowDetails!.backdropPath}',
                                 fit: BoxFit.cover,
                                 placeholder:
                                     (context, url) => Container(
@@ -826,8 +713,8 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                                 )
                                 : Icon(
                                   _isInWatchlist
-                                      ? Icons.bookmark
-                                      : Icons.bookmark_border,
+                                      ? Icons.visibility
+                                      : Icons.visibility_outlined,
                                   color:
                                       _isInWatchlist
                                           ? const Color(0xFFF8C13A)
@@ -836,10 +723,11 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                         onPressed: _toggleWatchlist,
                         tooltip:
                             _isInWatchlist
-                                ? 'Retirer de la liste "À voir"'
-                                : 'Ajouter à la liste "À voir"',
+                                ? 'Marquer comme non vu'
+                                : 'Marquer comme vu',
                       ),
                     ],
+                    iconTheme: const IconThemeData(color: Color(0xFFF4F6F8)),
                   ),
 
                   SliverToBoxAdapter(
@@ -855,9 +743,8 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: CachedNetworkImage(
-                                    imageUrl: _tmdbService.getImageUrl(
-                                      _tvShowDetails!.posterPath,
-                                    ),
+                                    imageUrl:
+                                        'https://image.tmdb.org/t/p/w500${_tvShowDetails!.posterPath}',
                                     width: 120,
                                     height: 180,
                                     fit: BoxFit.cover,
@@ -900,6 +787,19 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
+
+                                    if (_tvShowDetails!
+                                        .firstAirDate
+                                        .isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '(${_tvShowDetails!.firstAirDate.substring(0, 4)})',
+                                        style: TextStyle(
+                                          color: Colors.grey[300],
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
 
                                     const SizedBox(height: 8),
 
@@ -973,25 +873,117 @@ class _SerieDetailScreenState extends State<SerieDetailScreen>
 
                           const SizedBox(height: 24),
 
-                          TabBar(
-                            controller: _tabController,
-                            indicatorColor: const Color(0xFFF8C13A),
-                            labelColor: const Color(0xFFF8C13A),
-                            unselectedLabelColor: Colors.grey,
-                            tabs: const [
-                              Tab(text: 'À propos'),
-                              Tab(text: 'Saisons'),
-                            ],
+                          const Text(
+                            'Synopsis',
+                            style: TextStyle(
+                              color: Color(0xFFF8C13A),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _tvShowDetails!.overview.isNotEmpty
+                                ? _tvShowDetails!.overview
+                                : 'Aucun synopsis disponible',
+                            style: const TextStyle(
+                              color: Color(0xFFF4F6F8),
+                              fontSize: 16,
+                              height: 1.5,
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          const Text(
+                            'Informations',
+                            style: TextStyle(
+                              color: Color(0xFFF8C13A),
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildInfoRow(
+                            'Première diffusion',
+                            _formatDate(_tvShowDetails!.firstAirDate),
+                          ),
+                          _buildInfoRow(
+                            'Dernière diffusion',
+                            _formatDate(_tvShowDetails!.lastAirDate),
+                          ),
+                          _buildInfoRow(
+                            'Nombre de saisons',
+                            '${_tvShowDetails!.numberOfSeasons}',
+                          ),
+                          _buildInfoRow(
+                            'Nombre d\'épisodes',
+                            '${_tvShowDetails!.numberOfEpisodes}',
+                          ),
+                          _buildInfoRow('Statut', _tvShowDetails!.status),
+
+                          const SizedBox(height: 24),
+
+                          if (_tvShowDetails!.creators.isNotEmpty) ...[
+                            const Text(
+                              'Créateurs',
+                              style: TextStyle(
+                                color: Color(0xFFF8C13A),
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 120,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _tvShowDetails!.creators.length,
+                                itemBuilder: (context, index) {
+                                  final creator =
+                                      _tvShowDetails!.creators[index];
+                                  return _buildPersonCard(
+                                    name: creator.name,
+                                    role: 'Créateur',
+                                    profilePath: creator.profilePath,
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          if (_tvShowDetails!.cast.isNotEmpty) ...[
+                            const Text(
+                              'Casting',
+                              style: TextStyle(
+                                color: Color(0xFFF8C13A),
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 160,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _tvShowDetails!.cast.length,
+                                itemBuilder: (context, index) {
+                                  final actor = _tvShowDetails!.cast[index];
+                                  return _buildPersonCard(
+                                    name: actor.name,
+                                    role: actor.character,
+                                    profilePath: actor.profilePath,
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          _buildSeasons(),
                         ],
                       ),
-                    ),
-                  ),
-
-                  SliverFillRemaining(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [_buildOverviewTab(), _buildSeasonsTab()],
                     ),
                   ),
                 ],

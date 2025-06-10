@@ -1,9 +1,8 @@
-import 'package:visu/services/tmdb_service.dart';
+import '/visu.dart';
 
 enum MediaType { movie, tv, person, unknown }
 
 class SearchResult {
-
   factory SearchResult.fromJson(Map<String, dynamic> json) {
     MediaType type;
     switch (json['media_type'] as String? ?? 'unknown') {
@@ -92,7 +91,10 @@ class SearchResult {
     if (posterPath.isEmpty) {
       return 'https://via.placeholder.com/500x750?text=No+Image';
     }
-    return '${TMDbConfig.imageBaseUrl}${TMDbConfig.posterSize}$posterPath';
+    // Construction directe de l'URL pour garantir que le format est correct
+    final String cleanPath =
+        posterPath.startsWith('/') ? posterPath : '/$posterPath';
+    return 'https://image.tmdb.org/t/p/w500$cleanPath';
   }
 
   String getMediaTypeDisplay() {

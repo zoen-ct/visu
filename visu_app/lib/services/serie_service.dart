@@ -23,7 +23,8 @@ class SerieService {
             Serie(
               id: serieDetails.id,
               title: serieDetails.name,
-              imageUrl: _tmdbService.getImageUrl(serieDetails.posterPath),
+              imageUrl:
+                  'https://image.tmdb.org/t/p/w500${serieDetails.posterPath}',
               rating: serieDetails.voteAverage,
               releaseDate: serieDetails.firstAirDate,
               description: serieDetails.overview,
@@ -31,7 +32,9 @@ class SerieService {
             ),
           );
         } catch (e) {
-          debugPrint('Erreur lors de la récupération des détails de la série: $e');
+          debugPrint(
+            'Erreur lors de la récupération des détails de la série: $e',
+          );
         }
       }
       return series;

@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '/visu.dart';
 
 class EpisodeDetailScreen extends StatefulWidget {
-
   const EpisodeDetailScreen({
     super.key,
     required this.serieId,
@@ -13,7 +12,7 @@ class EpisodeDetailScreen extends StatefulWidget {
     required this.episodeNumber,
     required this.serieName,
   });
-  
+
   final int serieId;
   final int seasonNumber;
   final int episodeNumber;
@@ -124,7 +123,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
           widget.serieName,
           style: const TextStyle(color: Color(0xFFF8C13A)),
         ),
-        iconTheme: const IconThemeData(color: Color(0xFFF8C13A)),
+        iconTheme: const IconThemeData(color: Color(0xFFF4F6F8)),
       ),
       body: FutureBuilder<Episode>(
         future: _episodeFuture,
@@ -176,10 +175,8 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
               child: CachedNetworkImage(
-                imageUrl: _tmdbService.getImageUrl(
-                  episode.stillPath,
-                  size: TMDbConfig.backdropSize,
-                ),
+                imageUrl:
+                    'https://image.tmdb.org/t/p/w1280${episode.stillPath}',
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,

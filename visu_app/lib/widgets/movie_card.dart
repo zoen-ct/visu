@@ -3,17 +3,17 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '/visu.dart';
 
-class SerieCard extends StatefulWidget {
-  const SerieCard({super.key, required this.serie, required this.onTap});
+class MovieCard extends StatefulWidget {
+  const MovieCard({super.key, required this.movie, required this.onTap});
 
-  final Serie serie;
+  final SearchResult movie;
   final VoidCallback onTap;
 
   @override
-  State<SerieCard> createState() => _SerieCardState();
+  State<MovieCard> createState() => _MovieCardState();
 }
 
-class _SerieCardState extends State<SerieCard> {
+class _MovieCardState extends State<MovieCard> {
   final SupabaseWatchlistService _watchlistService = SupabaseWatchlistService();
   bool _isInWatchlist = false;
   bool _isLoading = false;
@@ -27,8 +27,8 @@ class _SerieCardState extends State<SerieCard> {
   Future<void> _checkWatchlistStatus() async {
     try {
       final isInWatchlist = await _watchlistService.isInWatchlist(
-        itemId: widget.serie.id,
-        mediaType: MediaType.tv,
+        itemId: widget.movie.id,
+        mediaType: MediaType.movie,
       );
 
       if (mounted) {
@@ -50,10 +50,10 @@ class _SerieCardState extends State<SerieCard> {
 
     try {
       bool success = await _watchlistService.toggleWatchlist(
-        itemId: widget.serie.id,
-        mediaType: MediaType.tv,
-        title: widget.serie.title,
-        posterPath: widget.serie.imageUrl.split('/').last,
+        itemId: widget.movie.id,
+        mediaType: MediaType.movie,
+        title: widget.movie.title,
+        posterPath: widget.movie.posterPath,
         addToWatchlist: !_isInWatchlist,
       );
 
@@ -91,8 +91,8 @@ class _SerieCardState extends State<SerieCard> {
     }
   }
 
-  String _formatDate(String dateStr) {
-    if (dateStr.isEmpty) return 'Date inconnue';
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return 'Date inconnue';
     try {
       final parts = dateStr.split('-');
       if (parts.length == 3) {
@@ -100,7 +100,7 @@ class _SerieCardState extends State<SerieCard> {
       }
       return dateStr;
     } catch (e) {
-      return dateStr;
+      return 'Date inconnue';
     }
   }
 
@@ -119,14 +119,14 @@ class _SerieCardState extends State<SerieCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Series image
+                // Movie image
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     bottomLeft: Radius.circular(12),
                   ),
                   child: CachedNetworkImage(
-                    imageUrl: widget.serie.imageUrl,
+                    imageUrl: widget.movie.getFullPosterPath(),
                     width: 120,
                     height: 160,
                     fit: BoxFit.cover,
@@ -147,7 +147,7 @@ class _SerieCardState extends State<SerieCard> {
                   ),
                 ),
 
-                // Series information
+                // Movie information
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -156,7 +156,7 @@ class _SerieCardState extends State<SerieCard> {
                       children: [
                         // Titre
                         Text(
-                          widget.serie.title,
+                          widget.movie.title,
                           style: const TextStyle(
                             color: Color(0xFFF4F6F8),
                             fontSize: 18,
@@ -178,7 +178,7 @@ class _SerieCardState extends State<SerieCard> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${widget.serie.rating}/10',
+                              '${widget.movie.voteAverage}/10',
                               style: const TextStyle(
                                 color: Color(0xFFF4F6F8),
                                 fontSize: 14,
@@ -191,7 +191,7 @@ class _SerieCardState extends State<SerieCard> {
 
                         // Release date
                         Text(
-                          'Sortie : ${_formatDate(widget.serie.releaseDate)}',
+                          'Sortie : ${_formatDate(widget.movie.releaseDate)}',
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 14,
@@ -200,30 +200,15 @@ class _SerieCardState extends State<SerieCard> {
 
                         const SizedBox(height: 8),
 
-                        // Genres
-                        Wrap(
-                          spacing: 4,
-                          runSpacing: 4,
-                          children:
-                              widget.serie.genres.take(3).map((genre) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF16232E),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    genre,
-                                    style: const TextStyle(
-                                      color: Color(0xFFF4F6F8),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
+                        // Description
+                        Text(
+                          widget.movie.overview,
+                          style: const TextStyle(
+                            color: Color(0xFFF4F6F8),
+                            fontSize: 12,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),

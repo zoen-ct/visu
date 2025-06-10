@@ -349,323 +349,168 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildTrendingSerieCard(dynamic serie) {
-    final String title = serie.title ?? 'Sans titre';
-    final String imageUrl = serie.imageUrl ?? '';
-    final double rating = serie.rating ?? 0.0;
-
-    return GestureDetector(
-      onTap: () => _navigateToSerieDetail(serie),
-      child: Container(
-        width: 120,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image de la série
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child:
-                    imageUrl.isNotEmpty
-                        ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          width: 120,
-                          placeholder:
-                              (_, __) => Container(
-                                color: Colors.grey[800],
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(0xFFF8C13A),
-                                    ),
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
-                          errorWidget:
-                              (_, __, ___) => Container(
-                                color: Colors.grey[800],
-                                child: const Icon(
-                                  Icons.error,
-                                  color: Colors.white,
-                                ),
-                              ),
-                        )
-                        : Container(
-                          color: Colors.grey[800],
-                          child: const Icon(Icons.tv, color: Colors.white),
-                        ),
-              ),
-            ),
-
-            // Titre de la série
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
-            // Note de la série
-            if (rating > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, color: Color(0xFFF8C13A), size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      rating.toStringAsFixed(1),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+    return TrendingSerieCard(serie: serie, onTap: _navigateToSerieDetail);
   }
 
   Widget _buildTrendingMovieCard(dynamic movie) {
-    final String title = movie['title'] ?? 'Sans titre';
-    final String posterPath = movie['poster_path'] ?? '';
-    final double voteAverage =
-        movie['vote_average'] != null
-            ? (movie['vote_average'] as num).toDouble()
-            : 0.0;
-    final String imageUrl =
-        posterPath.isNotEmpty
-            ? 'https://image.tmdb.org/t/p/w200$posterPath'
-            : '';
-
-    return GestureDetector(
-      onTap: () => _navigateToMovieDetail(movie),
-      child: Container(
-        width: 120,
-        margin: const EdgeInsets.symmetric(horizontal: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image du film
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child:
-                    imageUrl.isNotEmpty
-                        ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          width: 120,
-                          placeholder:
-                              (_, __) => Container(
-                                color: Colors.grey[800],
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(0xFFF8C13A),
-                                    ),
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              ),
-                          errorWidget:
-                              (_, __, ___) => Container(
-                                color: Colors.grey[800],
-                                child: const Icon(
-                                  Icons.error,
-                                  color: Colors.white,
-                                ),
-                              ),
-                        )
-                        : Container(
-                          color: Colors.grey[800],
-                          child: const Icon(Icons.movie, color: Colors.white),
-                        ),
-              ),
-            ),
-
-            // Titre du film
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-
-            // Note du film
-            if (voteAverage > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  children: [
-                    const Icon(Icons.star, color: Color(0xFFF8C13A), size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      voteAverage.toStringAsFixed(1),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+    return TrendingMovieCard(movie: movie, onTap: _navigateToMovieDetail);
   }
 
   Widget _buildSearchResultCard(SearchResult result) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      color: const Color(0xFF1D2F3E),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => _navigateToDetails(result),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            CachedNetworkImage(
-              imageUrl: result.getFullPosterPath(),
-              width: 100,
-              height: 150,
-              fit: BoxFit.cover,
-              placeholder:
-                  (context, url) => Container(
-                    width: 100,
-                    height: 150,
-                    color: Colors.grey[800],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFFF8C13A),
+    if (result.mediaType == MediaType.movie) {
+      return MovieCard(movie: result, onTap: () => _navigateToDetails(result));
+    } else if (result.mediaType == MediaType.tv) {
+      // Convertir le SearchResult en Serie pour l'utiliser avec SerieCard
+      final serie = Serie(
+        id: result.id,
+        title: result.title,
+        imageUrl: result.getFullPosterPath(),
+        rating: result.voteAverage,
+        releaseDate: result.releaseDate ?? '',
+        description: result.overview,
+        genres: [],
+      );
+
+      return SerieCard(serie: serie, onTap: () => _navigateToDetails(result));
+    } else {
+      // Pour les autres types (personnes, etc.)
+      return Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        color: const Color(0xFF1D2F3E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _navigateToDetails(result),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Image
+              CachedNetworkImage(
+                imageUrl: result.getFullPosterPath(),
+                width: 100,
+                height: 150,
+                fit: BoxFit.cover,
+                placeholder:
+                    (context, url) => Container(
+                      width: 100,
+                      height: 150,
+                      color: Colors.grey[800],
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFFF8C13A),
+                          ),
+                          strokeWidth: 2,
                         ),
-                        strokeWidth: 2,
                       ),
                     ),
-                  ),
-              errorWidget:
-                  (context, url, error) => Container(
-                    width: 100,
-                    height: 150,
-                    color: Colors.grey[800],
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      color: Colors.white,
-                    ),
-                  ),
-            ),
-
-            // Content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Titre
-                    Text(
-                      result.title,
-                      style: const TextStyle(
-                        color: Color(0xFFF4F6F8),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                errorWidget:
+                    (context, url, error) => Container(
+                      width: 100,
+                      height: 150,
+                      color: Colors.grey[800],
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.white,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
+              ),
 
-                    const SizedBox(height: 4),
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Titre
+                      Text(
+                        result.title,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F6F8),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
 
-                    // Type and year
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8C13A),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            result.getMediaTypeDisplay(),
-                            style: const TextStyle(
-                              color: Color(0xFF16232E),
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                      const SizedBox(height: 4),
+
+                      // Type and year
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8C13A),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              result.getMediaTypeDisplay(),
+                              style: const TextStyle(
+                                color: Color(0xFF16232E),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
 
-                        if (result.getYearFromReleaseDate().isNotEmpty) ...[
+                          if (result.getYearFromReleaseDate().isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              result.getYearFromReleaseDate(),
+                              style: const TextStyle(
+                                color: Color(0xFFF4F6F8),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+
                           const SizedBox(width: 8),
-                          Text(
-                            result.getYearFromReleaseDate(),
-                            style: const TextStyle(
-                              color: Color(0xFFF4F6F8),
-                              fontSize: 12,
+
+                          // Vote average
+                          if (result.voteAverage > 0) ...[
+                            const Icon(
+                              Icons.star,
+                              color: Color(0xFFF8C13A),
+                              size: 16,
                             ),
-                          ),
-                        ],
-
-                        const SizedBox(width: 8),
-
-                        // Vote average
-                        if (result.voteAverage > 0) ...[
-                          const Icon(
-                            Icons.star,
-                            color: Color(0xFFF8C13A),
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            result.voteAverage.toStringAsFixed(1),
-                            style: const TextStyle(
-                              color: Color(0xFFF4F6F8),
-                              fontSize: 12,
+                            const SizedBox(width: 4),
+                            Text(
+                              result.voteAverage.toStringAsFixed(1),
+                              style: const TextStyle(
+                                color: Color(0xFFF4F6F8),
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Description
-                    Text(
-                      result.overview,
-                      style: const TextStyle(
-                        color: Color(0xFFF4F6F8),
-                        fontSize: 14,
                       ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+
+                      const SizedBox(height: 8),
+
+                      // Description
+                      Text(
+                        result.overview,
+                        style: const TextStyle(
+                          color: Color(0xFFF4F6F8),
+                          fontSize: 14,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 }

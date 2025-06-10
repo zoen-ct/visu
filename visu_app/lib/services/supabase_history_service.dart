@@ -2,6 +2,8 @@ import '/visu.dart';
 
 class SupabaseHistoryService {
   final SupabaseAuthService _authService = SupabaseAuthService();
+  // Utiliser la même constante que dans SupabaseWatchlistService pour cohérence
+  static const String watchlistPrefix = "WATCHLIST_";
 
   Future<bool> isWatched({
     required int itemId,
@@ -20,7 +22,12 @@ class SupabaseHistoryService {
           .select()
           .eq('user_id', userId)
           .eq('item_id', itemId)
-          .eq('type', mediaType.name);
+          .eq('type', mediaType.name)
+          .not(
+            'title',
+            'like',
+            '$watchlistPrefix%',
+          ); // Exclure les éléments de la watchlist
 
       if (mediaType == MediaType.tv &&
           seasonNumber != null &&
@@ -65,7 +72,12 @@ class SupabaseHistoryService {
             .delete()
             .eq('user_id', userId)
             .eq('item_id', itemId)
-            .eq('type', mediaType.name);
+            .eq('type', mediaType.name)
+            .not(
+              'title',
+              'like',
+              '$watchlistPrefix%',
+            ); // Supprimer seulement les éléments vus, pas ceux de la watchlist
 
         if (mediaType == MediaType.tv &&
             seasonNumber != null &&
@@ -89,6 +101,22 @@ class SupabaseHistoryService {
 
       if (alreadyWatched) {
         return true;
+      }
+
+      // Vérifier si l'élément est déjà dans la watchlist et le supprimer
+      final watchlistService = SupabaseWatchlistService();
+      final isInWatchlist = await watchlistService.isInWatchlist(
+        itemId: itemId,
+        mediaType: mediaType,
+      );
+
+      if (isInWatchlist) {
+        // Supprimer de la watchlist puisqu'il va être marqué comme vu
+        await watchlistService.toggleWatchlist(
+          itemId: itemId,
+          mediaType: mediaType,
+          addToWatchlist: false,
+        );
       }
 
       final historyEntry = {
@@ -130,6 +158,11 @@ class SupabaseHistoryService {
           .from(SupabaseConfig.historyTable)
           .select()
           .eq('user_id', userId)
+          .not(
+            'title',
+            'like',
+            '$watchlistPrefix%',
+          ) // Exclure les éléments de la watchlist
           .order('watched_at', ascending: false);
 
       return result;
@@ -156,6 +189,11 @@ class SupabaseHistoryService {
           .select()
           .eq('user_id', userId)
           .eq('type', mediaType.name)
+          .not(
+            'title',
+            'like',
+            '$watchlistPrefix%',
+          ) // Exclure les éléments de la watchlist
           .order('watched_at', ascending: false);
 
       return result;
@@ -178,7 +216,12 @@ class SupabaseHistoryService {
       final query = supabase
           .from(SupabaseConfig.historyTable)
           .delete()
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .not(
+            'title',
+            'like',
+            '$watchlistPrefix%',
+          ); // Supprimer seulement les éléments vus, pas ceux de la watchlist
 
       if (mediaType != null) {
         await query.eq('type', mediaType.name);
