@@ -15,6 +15,7 @@ class _MoviesScreenState extends State<MoviesScreen> {
   final TMDbService _tmdbService = TMDbService();
 
   List<SearchResult>? _watchlistMovies;
+  Set<int> _watchedMovies = {}; // Pour suivre les films vus
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -79,6 +80,26 @@ class _MoviesScreenState extends State<MoviesScreen> {
 
   void _navigateToMovieDetail(SearchResult movie) {
     context.push('/movies/detail/${movie.id}');
+  }
+
+  void _toggleWatched(SearchResult movie) {
+    setState(() {
+      if (_watchedMovies.contains(movie.id)) {
+        _watchedMovies.remove(movie.id);
+      } else {
+        _watchedMovies.add(movie.id);
+      }
+
+      // Réorganiser la liste pour mettre les films vus en haut
+      if (_watchlistMovies != null) {
+        _watchlistMovies!.sort((a, b) {
+          bool isAWatched = _watchedMovies.contains(a.id);
+          bool isBWatched = _watchedMovies.contains(b.id);
+          if (isAWatched == isBWatched) return 0;
+          return isAWatched ? -1 : 1;
+        });
+      }
+    });
   }
 
   Widget _buildContent() {
@@ -157,99 +178,195 @@ class _MoviesScreenState extends State<MoviesScreen> {
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _loadWatchlistMovies,
-      color: const Color(0xFFF8C13A),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _watchlistMovies!.length,
-        itemBuilder: (context, index) {
-          final movie = _watchlistMovies![index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                onTap: () => _navigateToMovieDetail(movie),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
+    return Column(
+      children: [
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadWatchlistMovies,
+            color: const Color(0xFFF8C13A),
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Films vus
+                ..._watchlistMovies!
+                    .where((movie) => _watchedMovies.contains(movie.id))
+                    .map((movie) => _buildMovieCard(movie, true)),
+
+                // Label "à voir"
+                if (_watchlistMovies!.any(
+                  (movie) => !_watchedMovies.contains(movie.id),
+                )) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: const Text(
+                      'à voir',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                // Films non vus
+                ..._watchlistMovies!
+                    .where((movie) => !_watchedMovies.contains(movie.id))
+                    .map((movie) => _buildMovieCard(movie, false)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMovieCard(SearchResult movie, bool isWatched) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _navigateToMovieDetail(movie),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // En-tête avec le titre
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                    bottom: 8,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8C13A),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      movie.title,
+                      style: const TextStyle(
+                        color: Color(0xFF16232E),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                // Contenu principal
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Image du film
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          'https://image.tmdb.org/t/p/w92${movie.posterPath}',
-                          width: 60,
-                          height: 90,
-                          fit: BoxFit.cover,
-                          errorBuilder:
-                              (context, error, stackTrace) => Container(
-                                width: 60,
-                                height: 90,
-                                color: Colors.grey[200],
-                                child: const Icon(
-                                  Icons.movie,
-                                  color: Colors.grey,
+                        borderRadius: BorderRadius.circular(12),
+                        child: ColorFiltered(
+                          colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(isWatched ? 0.5 : 0),
+                            BlendMode.srcATop,
+                          ),
+                          child: Image.network(
+                            'https://image.tmdb.org/t/p/w92${movie.posterPath}',
+                            width: 80,
+                            height: 120,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stackTrace) => Container(
+                                  width: 80,
+                                  height: 120,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.movie,
+                                    color: Colors.grey,
+                                    size: 32,
+                                  ),
                                 ),
-                              ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      // Informations du film
+                      const SizedBox(width: 16),
+                      // Description du film
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              movie.title,
-                              style: const TextStyle(
-                                color: Color(0xFF16232E),
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
                               movie.overview,
                               style: TextStyle(
-                                color: Colors.grey[700],
+                                color: Colors.grey[800],
                                 fontSize: 14,
+                                height: 1.5,
+                                decoration:
+                                    isWatched
+                                        ? TextDecoration.lineThrough
+                                        : null,
                               ),
-                              maxLines: 2,
+                              maxLines: 4,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      // Bouton à voir
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF16232E),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Icon(
-                          Icons.check_circle,
-                          color: Color(0xFFF8C13A),
-                          size: 24,
+                      const SizedBox(width: 16),
+                      // Bouton vu/à voir
+                      GestureDetector(
+                        onTap: () => _toggleWatched(movie),
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color:
+                                isWatched
+                                    ? const Color(0xFFF8C13A).withOpacity(0.1)
+                                    : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          child: Icon(
+                            isWatched
+                                ? Icons.check_circle
+                                : Icons.check_circle_outline,
+                            color:
+                                isWatched
+                                    ? const Color(0xFFF8C13A)
+                                    : Colors.grey[400],
+                            size: 28,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
