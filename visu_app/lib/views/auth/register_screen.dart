@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '/visu.dart';
 
@@ -17,7 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final AuthService _authService = AuthService();
+  final SupabaseAuthService _authService = SupabaseAuthService();
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -48,12 +49,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      // Here, we simulate a successful registration followed by login
-      await Future.delayed(const Duration(seconds: 1));
-
-      final success = await _authService.loginUser(
+      final response = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        userData: {'name': _nameController.text.trim()},
       );
 
       if (mounted) {
@@ -61,7 +60,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _isLoading = false;
         });
 
-        if (success) {
+        if (response.user != null) {
           // Navigation will be handled by go_router redirect
         } else {
           setState(() {
@@ -69,6 +68,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 'Erreur lors de l\'inscription. Veuillez réessayer.';
           });
         }
+      }
+    } on AuthException catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.message;
+        });
       }
     } catch (e) {
       if (mounted) {

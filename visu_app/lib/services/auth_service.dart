@@ -1,64 +1,24 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 
 import '/visu.dart';
 
 class AuthService {
+  final SupabaseAuthService _supabaseAuthService = SupabaseAuthService();
 
-  AuthService() {
-    _initAuthState();
-  }
-  final StreamController<bool> _authStateController =
-      StreamController<bool>.broadcast();
-
-  Stream<bool> get authStateChanges => _authStateController.stream;
-
-  bool? _isLoggedInCache;
-
-  Future<void> _initAuthState() async {
-    _isLoggedInCache = await isLoggedIn();
-    _authStateController.add(_isLoggedInCache ?? false);
-  }
+  Stream<bool> get authStateChanges => _supabaseAuthService.authStateChanges;
 
   Future<bool> loginUser({
     required String email,
     required String password,
   }) async {
     try {
-      final Map<String, String> body = {'email': email, 'password': password};
-
-      final response = await http.post(
-        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.loginEndpoint}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode(body),
+      final response = await _supabaseAuthService.signIn(
+        email: email,
+        password: password,
       );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-
-        if (data.containsKey('token')) {
-          final String token = data['token'];
-
-          if (token.isNotEmpty) {
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString(ApiConfig.tokenKey, token);
-
-            _isLoggedInCache = true;
-            _authStateController.add(true);
-
-            return true;
-          }
-        }
-      }
-
-      return false;
+      return response.session != null;
     } catch (e) {
       debugPrint('Erreur lors de la connexion: $e');
       return false;
@@ -66,52 +26,33 @@ class AuthService {
   }
 
   Future<bool> isLoggedIn() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(ApiConfig.tokenKey);
-
-      if (token != null && token.isNotEmpty) {
-        final bool isExpired = JwtDecoder.isExpired(token);
-        _isLoggedInCache = !isExpired;
-        return !isExpired;
-      }
-
-      _isLoggedInCache = false;
-      return false;
-    } catch (e) {
-      debugPrint('Erreur lors de la vérification de connexion: $e');
-      _isLoggedInCache = false;
-      return false;
-    }
+    return _supabaseAuthService.isLoggedIn;
   }
 
   bool isLoggedInSync() {
-    return _isLoggedInCache ?? false;
+    return _supabaseAuthService.isLoggedIn;
   }
 
   Future<void> logout() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(ApiConfig.tokenKey);
-
-      _isLoggedInCache = false;
-      _authStateController.add(false);
+      await _supabaseAuthService.signOut();
     } catch (e) {
       debugPrint('Erreur lors de la déconnexion: $e');
     }
   }
 
-  Future<String?> getToken() async {
+  Future<Map<String, dynamic>?> getCurrentUser() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(ApiConfig.tokenKey);
+      final user = await _supabaseAuthService.getCurrentUser();
+      if (user == null) return null;
+
+      final userProfileService = SupabaseUserProfileService();
+      final profile = await userProfileService.getUserProfile();
+
+      return {'id': user.id, 'email': user.email, ...?profile};
     } catch (e) {
-      debugPrint('Erreur lors de la récupération du token: $e');
+      debugPrint('Erreur lors de la récupération des infos utilisateur: $e');
       return null;
     }
-  }
-
-  void dispose() {
-    _authStateController.close();
   }
 }
