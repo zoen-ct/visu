@@ -5,7 +5,6 @@ import 'supabase_config.dart';
 import 'supabase_initializer.dart';
 
 class SupabaseAuthService {
-
   SupabaseAuthService() {
     supabase.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
@@ -47,17 +46,24 @@ class SupabaseAuthService {
     Map<String, dynamic>? userData,
   }) async {
     try {
+      // Récupérer le username depuis userData ou générer depuis l'email
+      final String username = userData?['name'] ?? email.split('@').first;
+
+      // Préparation des données utilisateur avec le username pour les métadonnées
+      final userMetadata = {...?userData, 'username': username};
+
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
-        data: userData,
+        data:
+            userMetadata, // Stockage du username dans les métadonnées de l'utilisateur
       );
 
       if (response.user != null) {
+        // Insérer les champs obligatoires dans la table user_profiles
         await supabase.from(SupabaseConfig.userProfileTable).insert({
           'id': response.user!.id,
-          'email': email,
-          'name': userData?['name'] ?? email.split('@').first,
+          'username': username, // Ajout du champ username qui est obligatoire
           'created_at': DateTime.now().toIso8601String(),
         });
       }
@@ -83,6 +89,29 @@ class SupabaseAuthService {
   }
 
   String? get currentUserId => supabase.auth.currentUser?.id;
+
+  User? get currentUser => supabase.auth.currentUser;
+
+  Future<String?> getUsername() async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        return null;
+      }
+
+      // Récupérer le username depuis les métadonnées de l'utilisateur
+      final String? username = user.userMetadata?['username'] as String?;
+
+      // Si le username n'est pas trouvé dans les métadonnées, utiliser la partie avant @ de l'email
+      return username ?? user.email?.split('@').first;
+    } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de la récupération du nom d\'utilisateur',
+        e,
+      );
+      return null;
+    }
+  }
 
   Future<void> resetPassword(String email) async {
     try {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '/visu.dart';
 
@@ -47,8 +48,16 @@ class _ProfileScreenState extends State<ProfileScreen>
         _errorMessage = null;
       });
 
+      // Récupérer le nom d'utilisateur
+      final username = await _authService.getUsername();
+
       // Récupérer les informations du profil utilisateur
       final userProfile = await _userProfileService.getUserProfile();
+
+      // Si le profil existe mais que le nom d'utilisateur n'est pas défini, le mettre à jour
+      if (userProfile != null && username != null) {
+        userProfile['username'] = username;
+      }
 
       // Récupérer les favoris
       final favorites = await _favoritesService.getFavorites();
@@ -215,11 +224,11 @@ class _ProfileScreenState extends State<ProfileScreen>
             radius: 50,
             backgroundColor: const Color(0xFFF8C13A),
             backgroundImage:
-                _userInfo != null && _userInfo!['profilePicture'] != null
-                    ? NetworkImage(_userInfo!['profilePicture'])
+                _userInfo != null && _userInfo!['profile_picture'] != null
+                    ? NetworkImage(_userInfo!['profile_picture'])
                     : null,
             child:
-                _userInfo != null && _userInfo!['profilePicture'] != null
+                _userInfo != null && _userInfo!['profile_picture'] != null
                     ? null
                     : const Icon(
                       Icons.person,
@@ -229,7 +238,11 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 20),
           Text(
-            _userInfo != null ? _userInfo!['name'] : 'Utilisateur Vizu',
+            _userInfo != null && _userInfo!['username'] != null
+                ? _userInfo!['username']
+                : (_userInfo != null && _userInfo!['name'] != null
+                    ? _userInfo!['name']
+                    : 'Utilisateur Vizu'),
             style: const TextStyle(
               color: Color(0xFFF4F6F8),
               fontSize: 24,
@@ -238,7 +251,9 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            _userInfo != null ? _userInfo!['email'] : 'utilisateur@vizu.com',
+            _userInfo != null && _userInfo!['email'] != null
+                ? _userInfo!['email']
+                : _authService.currentUser?.email ?? 'utilisateur@vizu.com',
             style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
           ),
 

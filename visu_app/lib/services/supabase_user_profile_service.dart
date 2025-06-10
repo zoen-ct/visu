@@ -19,12 +19,49 @@ class SupabaseUserProfileService {
               .from(SupabaseConfig.userProfileTable)
               .select()
               .eq('id', userId)
-              .single();
+              .maybeSingle();
+
+      // Si aucun profil n'existe, créer un profil par défaut
+      if (response == null) {
+        return await _createDefaultProfile(userId);
+      }
 
       return response;
     } catch (e) {
       SupabaseConfig.logError(
         'Erreur lors de la récupération du profil utilisateur',
+        e,
+      );
+      return null;
+    }
+  }
+
+  // Créer un profil par défaut pour un nouvel utilisateur
+  Future<Map<String, dynamic>?> _createDefaultProfile(String userId) async {
+    try {
+      // Récupérer les informations de l'utilisateur depuis auth.users si possible
+      final userInfo = await supabase.auth.getUser();
+      final email = userInfo.user?.email ?? '';
+
+      final defaultProfile = {
+        'id': userId,
+        'email': email,
+        'name':
+            email.split(
+              '@',
+            )[0], // Utiliser la partie avant @ comme nom d'utilisateur par défaut
+        'profile_picture': SupabaseConfig.defaultProfileImage,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+
+      await supabase
+          .from(SupabaseConfig.userProfileTable)
+          .insert(defaultProfile);
+
+      return defaultProfile;
+    } catch (e) {
+      SupabaseConfig.logError(
+        'Erreur lors de la création du profil utilisateur par défaut',
         e,
       );
       return null;
