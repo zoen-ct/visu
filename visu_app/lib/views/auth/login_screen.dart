@@ -171,27 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 8),
-
-                  // Forgot password link
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        // TODO: Naviguer vers la page de récupération de mot de passe
-                      },
-                      child: const Text(
-                        'Mot de passe oublié ?',
-                        style: TextStyle(
-                          color: Color(0xFFF8C13A),
-                          fontSize: 14,
-                          fontFamily: 'Roboto',
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
 
                   // Error message
                   if (_errorMessage != null) ...[
