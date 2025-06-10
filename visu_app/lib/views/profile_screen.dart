@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '/visu.dart';
 
@@ -13,8 +14,11 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen>
     with SingleTickerProviderStateMixin {
-  final UserService _userService = UserService();
-  final AuthService _authService = AuthService();
+  final SupabaseUserProfileService _userProfileService =
+      SupabaseUserProfileService();
+  final SupabaseFavoritesService _favoritesService = SupabaseFavoritesService();
+  final SupabaseHistoryService _historyService = SupabaseHistoryService();
+  final SupabaseAuthService _authService = SupabaseAuthService();
 
   late TabController _tabController;
   bool _isLoading = true;
@@ -44,24 +48,67 @@ class _ProfileScreenState extends State<ProfileScreen>
         _errorMessage = null;
       });
 
-      final userInfoFuture = _userService.getCurrentUserInfo();
-      final userStatsFuture = _userService.getUserStats();
-      final favoritesFuture = _userService.getFavorites();
-      final watchHistoryFuture = _userService.getWatchHistory();
+      // Récupérer les informations du profil utilisateur
+      final userProfile = await _userProfileService.getUserProfile();
 
-      final results = await Future.wait([
-        userInfoFuture,
-        userStatsFuture,
-        favoritesFuture,
-        watchHistoryFuture,
-      ]);
+      // Récupérer les favoris
+      final favorites = await _favoritesService.getFavorites();
+
+      // Récupérer l'historique
+      final watchHistory = await _historyService.getHistory();
+
+      // Calculer les statistiques de l'utilisateur
+      final Map<String, dynamic> userStats = {
+        'totalWatchedMovies':
+            watchHistory
+                .where((item) => item['type'] == MediaType.movie.name)
+                .length,
+        'totalWatchedEpisodes':
+            watchHistory
+                .where((item) => item['type'] == MediaType.tv.name)
+                .length,
+        'totalFavorites': favorites.length,
+        'totalWatchTimeHours':
+            (watchHistory.length * 1.5)
+                .round(), // Estimation de 1.5h par élément regardé
+      };
+
+      // Convertir les favoris en objets SearchResult
+      final List<SearchResult> favoriteResults =
+          favorites.map((favorite) {
+            return SearchResult(
+              id: favorite['item_id'],
+              mediaType:
+                  favorite['type'] == 'movie' ? MediaType.movie : MediaType.tv,
+              title: favorite['title'] ?? 'Sans titre',
+              overview: '',
+              posterPath: favorite['poster_path'],
+              releaseDate: '',
+              voteAverage: 0,
+            );
+          }).toList();
+
+      // Convertir l'historique en objets SearchResult
+      final List<SearchResult> historyResults =
+          watchHistory.map((item) {
+            return SearchResult(
+              id: item['item_id'],
+              mediaType:
+                  item['type'] == 'movie' ? MediaType.movie : MediaType.tv,
+              title: item['title'] ?? 'Sans titre',
+              overview: '',
+              posterPath: item['poster_path'],
+              releaseDate: '',
+              voteAverage: 0,
+            );
+          }).toList();
 
       if (mounted) {
         setState(() {
-          _userInfo = results[0] as Map<String, dynamic>?;
-          _userStats = results[1] as Map<String, dynamic>;
-          _favorites = results[2] as List<SearchResult>;
-          _watchHistory = results[3] as List<SearchResult>;
+          _userInfo = userProfile;
+          _userStats = userStats;
+          _favorites = favoriteResults;
+          _watchHistory = historyResults;
           _isLoading = false;
         });
       }
@@ -100,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           IconButton(
             icon: const Icon(Icons.logout, color: Color(0xFFF8C13A)),
             onPressed: () async {
-              await _authService.logout();
+              await _authService.signOut();
               if (context.mounted) {
                 context.go('/login');
               }

@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 import '/visu.dart';
 
 class AppRouter {
-  AppRouter({AuthService? authService})
-    : _authService = authService ?? AuthService();
-  final AuthService _authService;
+  AppRouter({SupabaseAuthService? authService})
+    : _authService = authService ?? SupabaseAuthService();
+  final SupabaseAuthService _authService;
 
   late final GoRouter router = GoRouter(
     debugLogDiagnostics: true,
@@ -117,7 +117,7 @@ class AppRouter {
 
     final List<String> authForbiddenRoutes = ['/login', '/register'];
 
-    final bool isLoggedIn = _authService.isLoggedInSync();
+    final bool isLoggedIn = _authService.isLoggedIn;
 
     if (isLoggedIn && authForbiddenRoutes.contains(currentPath)) {
       return '/series';
@@ -139,5 +139,5 @@ class GoRouterRefreshStream extends ChangeNotifier {
     });
   }
 
-  final AuthService _authService;
+  final SupabaseAuthService _authService;
 }
