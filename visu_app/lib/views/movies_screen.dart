@@ -12,6 +12,7 @@ class MoviesScreen extends StatefulWidget {
 
 class _MoviesScreenState extends State<MoviesScreen> {
   final SupabaseWatchlistService _watchlistService = SupabaseWatchlistService();
+  final SupabaseHistoryService _historyService = SupabaseHistoryService();
   final TMDbService _tmdbService = TMDbService();
 
   List<SearchResult>? _watchlistMovies;
@@ -35,12 +36,25 @@ class _MoviesScreenState extends State<MoviesScreen> {
         MediaType.movie,
       );
 
+      // Récupérer l'historique des films vus
+      final historyItems = await _historyService.getHistory();
+      final Set<int> watchedMovieIds =
+          historyItems
+              .where((item) => item['type'] == MediaType.movie.name)
+              .map<int>((item) => item['item_id'] as int)
+              .toSet();
+
       final List<SearchResult> movies = [];
       for (final item in watchlistItems) {
         try {
-          final movieDetails = await _tmdbService.getMovieDetails(
-            item['item_id'],
-          );
+          final int movieId = item['item_id'];
+
+          // Ignorer les films qui ont déjà été vus
+          if (watchedMovieIds.contains(movieId)) {
+            continue;
+          }
+
+          final movieDetails = await _tmdbService.getMovieDetails(movieId);
 
           movies.add(
             SearchResult.fromJson({

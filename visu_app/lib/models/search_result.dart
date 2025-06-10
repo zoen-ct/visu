@@ -50,6 +50,8 @@ class SearchResult {
       voteAverage: (json['vote_average'] as num?)?.toDouble() ?? 0.0,
       releaseDate: releaseDate,
       overview: json['overview'] as String? ?? 'Aucune description disponible',
+      seasonNumber: json['season_number'] as int?,
+      episodeNumber: json['episode_number'] as int?,
     );
   }
 
@@ -61,6 +63,8 @@ class SearchResult {
     required this.voteAverage,
     this.releaseDate,
     required this.overview,
+    this.seasonNumber,
+    this.episodeNumber,
   });
 
   final int id;
@@ -70,6 +74,8 @@ class SearchResult {
   final double voteAverage;
   final String? releaseDate;
   final String overview;
+  final int? seasonNumber;
+  final int? episodeNumber;
 
   String getFormattedReleaseDate() {
     if (releaseDate == null || releaseDate!.isEmpty) {
