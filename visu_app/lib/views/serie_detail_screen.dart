@@ -1112,6 +1112,9 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
                           ],
 
                           _buildSeasons(),
+
+                          // Ajout d'une marge en bas pour permettre un meilleur défilement
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),

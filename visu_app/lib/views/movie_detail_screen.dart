@@ -914,6 +914,9 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                               ),
                             ),
                           ],
+
+                          // Ajout d'une marge en bas pour permettre un meilleur défilement
+                          const SizedBox(height: 100),
                         ],
                       ),
                     ),
