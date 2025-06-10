@@ -60,12 +60,25 @@ class SupabaseAuthService {
       );
 
       if (response.user != null) {
-        // Insérer les champs obligatoires dans la table user_profiles
-        await supabase.from(SupabaseConfig.userProfileTable).insert({
-          'id': response.user!.id,
-          'username': username, // Ajout du champ username qui est obligatoire
-          'created_at': DateTime.now().toIso8601String(),
-        });
+        // Attendre un peu pour s'assurer que l'utilisateur est bien créé dans la base de données
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        try {
+          // Insérer les champs obligatoires dans la table user_profiles
+          // N'inclure que les champs qui existent réellement dans la table
+          await supabase.from(SupabaseConfig.userProfileTable).insert({
+            'id': response.user!.id,
+            'name': username,
+            'profile_picture': SupabaseConfig.defaultProfileImage,
+            'created_at': DateTime.now().toIso8601String(),
+          });
+        } catch (profileError) {
+          SupabaseConfig.logError(
+            'Erreur lors de la création du profil utilisateur',
+            profileError,
+          );
+          // On continue malgré l'erreur - le profil pourra être créé plus tard
+        }
       }
 
       return response;
@@ -133,6 +146,39 @@ class SupabaseAuthService {
         'Erreur lors de la mise à jour du mot de passe',
         e,
       );
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      // Obtenir l'utilisateur actuel
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('Aucun utilisateur connecté');
+      }
+
+      // Supprimer les données de l'utilisateur de la table user_profiles
+      await supabase
+          .from(SupabaseConfig.userProfileTable)
+          .delete()
+          .eq('id', user.id);
+
+      // Utiliser une solution alternative à admin.deleteUser
+      // Mettre à jour les métadonnées de l'utilisateur pour indiquer que le compte est supprimé
+      await supabase.auth.updateUser(
+        UserAttributes(
+          data: {
+            'deleted': true,
+            'deleted_at': DateTime.now().toIso8601String(),
+          },
+        ),
+      );
+
+      // Déconnecter l'utilisateur
+      await signOut();
+    } catch (e) {
+      SupabaseConfig.logError('Erreur lors de la suppression du compte', e);
       rethrow;
     }
   }

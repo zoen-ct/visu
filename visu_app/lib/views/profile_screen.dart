@@ -561,13 +561,17 @@ class _ProfileScreenState extends State<ProfileScreen>
           size: 16,
         ),
         onTap: () {
-          // Implement navigation to the corresponding pages
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Navigation vers $text à implémenter'),
-              backgroundColor: const Color(0xFF16232E),
-            ),
-          );
+          if (text == 'Paramètres') {
+            context.push('/profile/settings');
+          } else {
+            // Pour les autres options
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Navigation vers $text à implémenter'),
+                backgroundColor: const Color(0xFF16232E),
+              ),
+            );
+          }
         },
       ),
     );
