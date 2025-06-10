@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '/visu.dart';
 
@@ -160,6 +162,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Avatar actuel
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: const Color(0xFFF8C13A),
@@ -177,25 +180,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ),
                 ),
                 const SizedBox(height: 16),
-                TextButton.icon(
-                  icon: const Icon(Icons.photo_camera),
-                  label: const Text('Changer ma photo'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFF8C13A),
-                  ),
-                  onPressed: () {
-                    // Ici on pourrait implémenter la sélection d'une photo
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Fonctionnalité à implémenter dans une version future',
-                        ),
-                        backgroundColor: Color(0xFF16232E),
-                      ),
-                    );
-                  },
+
+                // Message sur l'upload d'avatar
+                const Text(
+                  "La fonctionnalité d'upload d'avatar sera disponible dans une version future",
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  textAlign: TextAlign.center,
                 ),
+
                 const SizedBox(height: 16),
+
                 TextField(
                   controller: usernameController,
                   style: const TextStyle(color: Color(0xFFF4F6F8)),
@@ -223,46 +217,70 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             TextButton(
               onPressed: () async {
-                final newUsername = usernameController.text.trim();
-                if (newUsername.isNotEmpty) {
-                  final success = await _userProfileService.updateUsername(
-                    newUsername,
-                  );
-                  if (success && mounted) {
-                    // Rafraîchir les données utilisateur
-                    await _loadUserData();
-                    Navigator.pop(context);
+                // Afficher un indicateur de chargement
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return const AlertDialog(
+                      backgroundColor: Color(0xFF1D2F3E),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFF8C13A),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Mise à jour du profil...',
+                            style: TextStyle(color: Color(0xFFF4F6F8)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
 
+                try {
+                  // Mettre à jour le nom d'utilisateur uniquement
+                  final newUsername = usernameController.text.trim();
+                  final success = await _userProfileService.updateUsername(
+                    newUsername.isNotEmpty ? newUsername : 'Visueur',
+                  );
+
+                  // Rafraîchir les données utilisateur
+                  if (success) {
+                    await _loadUserData();
+                  }
+
+                  // Fermer le dialogue de chargement
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    // Fermer le dialogue d'édition
+                    Navigator.of(context).pop();
+
+                    // Afficher un message de succès
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Profil mis à jour avec succès'),
                         backgroundColor: Color(0xFF16232E),
                       ),
                     );
-                  } else if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Erreur lors de la mise à jour du profil',
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    Navigator.pop(context);
                   }
-                } else {
-                  // Si le champ est vide, on considère que l'utilisateur veut revenir au nom par défaut
-                  final success = await _userProfileService.updateUsername(
-                    null,
-                  );
-                  if (success && mounted) {
-                    await _loadUserData();
-                    Navigator.pop(context);
+                } catch (e) {
+                  // Gérer les erreurs
+                  if (context.mounted) {
+                    Navigator.of(
+                      context,
+                    ).pop(); // Fermer le dialogue de chargement
+                    Navigator.of(context).pop(); // Fermer le dialogue d'édition
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Nom d\'utilisateur réinitialisé'),
-                        backgroundColor: Color(0xFF16232E),
+                      SnackBar(
+                        content: Text('Erreur: $e'),
+                        backgroundColor: Colors.red,
                       ),
                     );
                   }
