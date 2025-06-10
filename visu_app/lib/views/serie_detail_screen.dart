@@ -18,6 +18,7 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
   late TMDbService _tmdbService;
   late SupabaseFavoritesService _favoritesService;
   late SupabaseHistoryService _historyService;
+  late SupabaseWatchlistService _watchlistService;
 
   TvShowDetails? _tvShowDetails;
   bool _isLoading = true;
@@ -25,8 +26,10 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
 
   bool _isFavorite = false;
   bool _isInWatchlist = false;
+  bool _isWatched = false;
   bool _isFavoriteLoading = false;
   bool _isWatchlistLoading = false;
+  bool _isWatchedLoading = false;
 
   @override
   void initState() {
@@ -34,9 +37,11 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
     _tmdbService = TMDbService();
     _favoritesService = SupabaseFavoritesService();
     _historyService = SupabaseHistoryService();
+    _watchlistService = SupabaseWatchlistService();
     _loadTvShowDetails();
     _checkFavoriteStatus();
     _checkWatchlistStatus();
+    _checkWatchedStatus();
   }
 
   Future<void> _loadTvShowDetails() async {
@@ -84,9 +89,26 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
     }
   }
 
+  Future<void> _checkWatchedStatus() async {
+    try {
+      final isWatched = await _historyService.isWatched(
+        itemId: widget.serieId,
+        mediaType: MediaType.tv,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isWatched = isWatched;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de la vérification du statut vu: $e');
+    }
+  }
+
   Future<void> _checkWatchlistStatus() async {
     try {
-      final isInWatchlist = await _historyService.isWatched(
+      final isInWatchlist = await _watchlistService.isInWatchlist(
         itemId: widget.serieId,
         mediaType: MediaType.tv,
       );
@@ -97,7 +119,7 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Erreur lors de la vérification de l\'historique: $e');
+      debugPrint('Erreur lors de la vérification de la watchlist: $e');
     }
   }
 
@@ -164,8 +186,58 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
     });
 
     try {
+      bool success = await _watchlistService.toggleWatchlist(
+        itemId: widget.serieId,
+        mediaType: MediaType.tv,
+        title: _tvShowDetails!.name,
+        posterPath: _tvShowDetails!.posterPath,
+        addToWatchlist: !_isInWatchlist,
+      );
+
+      if (mounted && success) {
+        setState(() {
+          _isInWatchlist = !_isInWatchlist;
+          _isWatchlistLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isInWatchlist
+                  ? 'Ajouté à la watchlist'
+                  : 'Retiré de la watchlist',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: const Color(0xFF16232E),
+          ),
+        );
+      } else if (mounted) {
+        setState(() {
+          _isWatchlistLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isWatchlistLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleWatched() async {
+    if (_isWatchedLoading || _tvShowDetails == null) return;
+
+    setState(() {
+      _isWatchedLoading = true;
+    });
+
+    try {
       bool success;
-      if (_isInWatchlist) {
+      if (_isWatched) {
         success = await _historyService.markAsWatched(
           itemId: widget.serieId,
           mediaType: MediaType.tv,
@@ -183,16 +255,14 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
 
       if (mounted && success) {
         setState(() {
-          _isInWatchlist = !_isInWatchlist;
-          _isWatchlistLoading = false;
+          _isWatched = !_isWatched;
+          _isWatchedLoading = false;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isInWatchlist
-                  ? 'Ajouté à la liste "À voir"'
-                  : 'Retiré de la liste "À voir"',
+              _isWatched ? 'Marqué comme vu' : 'Marqué comme non vu',
             ),
             duration: const Duration(seconds: 2),
             backgroundColor: const Color(0xFF16232E),
@@ -200,13 +270,13 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
         );
       } else if (mounted) {
         setState(() {
-          _isWatchlistLoading = false;
+          _isWatchedLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isWatchlistLoading = false;
+          _isWatchedLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
@@ -585,6 +655,66 @@ class _SerieDetailScreenState extends State<SerieDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF16232E),
+      // Ajout des boutons flottants pour watchlist et favoris
+      floatingActionButton:
+          _tvShowDetails == null
+              ? null
+              : Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Bouton pour ajouter à la watchlist
+                    FloatingActionButton(
+                      heroTag: 'watchlist',
+                      onPressed: _toggleWatchlist,
+                      backgroundColor: const Color(0xFF1D2F3E),
+                      shape: const CircleBorder(),
+                      child:
+                          _isWatchlistLoading
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFF8C13A),
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : Icon(
+                                _isInWatchlist ? Icons.check : Icons.add,
+                                color: const Color(0xFFF8C13A),
+                                size: 30,
+                              ),
+                    ),
+                    const SizedBox(width: 20),
+                    // Bouton pour marquer comme favoris
+                    FloatingActionButton(
+                      heroTag: 'favorite',
+                      onPressed: _toggleFavorite,
+                      backgroundColor: const Color(0xFFF8C13A),
+                      shape: const CircleBorder(),
+                      child:
+                          _isFavoriteLoading
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.black,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : Icon(
+                                _isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _isFavorite ? Colors.red : Colors.black,
+                                size: 30,
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body:
           _isLoading
               ? const Center(

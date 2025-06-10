@@ -46,11 +46,9 @@ class SupabaseUserProfileService {
       final defaultProfile = {
         'id': userId,
         'email': email,
-        'name':
-            email.split(
-              '@',
-            )[0], // Utiliser la partie avant @ comme nom d'utilisateur par défaut
-        'profile_picture': SupabaseConfig.defaultProfileImage,
+        'username':
+            'Visueur',
+        'avatar_url': null,
         'created_at': DateTime.now().toIso8601String(),
       };
 
@@ -114,7 +112,7 @@ class SupabaseUserProfileService {
           .from('avatars')
           .getPublicUrl(filePath);
 
-      await updateUserProfile({'profile_picture': publicUrl});
+      await updateUserProfile({'avatar_url': publicUrl});
 
       return publicUrl;
     } catch (e) {
@@ -178,5 +176,43 @@ class SupabaseUserProfileService {
       );
       return false;
     }
+  }
+
+  // Obtenir l'URL de l'avatar de l'utilisateur, avec une URL par défaut si non définie
+  Future<String> getAvatarUrl() async {
+    try {
+      final userId = _authService.currentUserId;
+      if (userId == null) {
+        return SupabaseConfig.defaultProfileImage;
+      }
+
+      final response =
+          await supabase
+              .from(SupabaseConfig.userProfileTable)
+              .select('avatar_url')
+              .eq('id', userId)
+              .maybeSingle();
+
+      // Si on a un avatar dans le profil et qu'il n'est pas null
+      if (response != null && response['avatar_url'] != null) {
+        return response['avatar_url'];
+      }
+
+      // Sinon, retourner l'image par défaut
+      return SupabaseConfig.defaultProfileImage;
+    } catch (e) {
+      SupabaseConfig.logError('Erreur lors de la récupération de l\'avatar', e);
+      return SupabaseConfig
+          .defaultProfileImage; // En cas d'erreur, utiliser l'image par défaut
+    }
+  }
+
+  // Mettre à jour le nom d'utilisateur
+  Future<bool> updateUsername(String? username) async {
+    // Si le nom d'utilisateur est null ou vide, utiliser "Visueur" par défaut
+    final String usernameToUse =
+        (username == null || username.isEmpty) ? 'Visueur' : username;
+
+    return await updateUserProfile({'username': usernameToUse});
   }
 }

@@ -24,6 +24,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Visu a besoin d'accéder à votre caméra pour prendre une photo de profil</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Visu a besoin d'accéder à votre galerie photo pour sélectionner une photo de profil</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Visu a besoin d'accéder à votre microphone lorsque vous utilisez la caméra</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

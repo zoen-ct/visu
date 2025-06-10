@@ -5,9 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '/visu.dart';
 
 class TMDbConfig {
-  static const String apiKey = ApiConfig.tmdbApiKey;
-  static const String baseUrl = ApiConfig.tmdbBaseUrl;
-  static const String imageBaseUrl = ApiConfig.tmdbImageBaseUrl;
+  static String apiKey = ApiConfig.tmdbApiKey;
+  static String baseUrl = ApiConfig.tmdbBaseUrl;
+  static String imageBaseUrl = ApiConfig.tmdbImageBaseUrl;
 
   static const String posterSize = ApiConfig.posterSize;
   static const String backdropSize = ApiConfig.backdropSize;
