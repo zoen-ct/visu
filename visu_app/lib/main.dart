@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:visu/router/app_router.dart';
 import 'package:visu/services/supabase_initializer.dart';
 
@@ -6,6 +7,9 @@ import 'visu.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Chargement des variables d'environnement
+  await dotenv.load(fileName: ".env");
 
   // Initialisation de Supabase
   await SupabaseInitializer.initialize();

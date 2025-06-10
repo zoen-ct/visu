@@ -17,6 +17,7 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   late TMDbService _tmdbService;
   late SupabaseFavoritesService _favoritesService;
   late SupabaseHistoryService _historyService;
+  late SupabaseWatchlistService _watchlistService;
 
   Map<String, dynamic>? _movieDetails;
   bool _isLoading = true;
@@ -24,8 +25,10 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
 
   bool _isFavorite = false;
   bool _isWatched = false;
+  bool _isInWatchlist = false;
   bool _isFavoriteLoading = false;
   bool _isWatchedLoading = false;
+  bool _isWatchlistLoading = false;
 
   @override
   void initState() {
@@ -33,9 +36,11 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
     _tmdbService = TMDbService();
     _favoritesService = SupabaseFavoritesService();
     _historyService = SupabaseHistoryService();
+    _watchlistService = SupabaseWatchlistService();
     _loadMovieDetails();
     _checkFavoriteStatus();
     _checkWatchedStatus();
+    _checkWatchlistStatus();
   }
 
   Future<void> _loadMovieDetails() async {
@@ -103,6 +108,23 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       }
     } catch (e) {
       debugPrint('Erreur lors de la vérification de l\'historique: $e');
+    }
+  }
+
+  Future<void> _checkWatchlistStatus() async {
+    try {
+      final isInWatchlist = await _watchlistService.isInWatchlist(
+        itemId: widget.movieId,
+        mediaType: MediaType.movie,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isInWatchlist = isInWatchlist;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de la vérification de la watchlist: $e');
     }
   }
 
@@ -210,6 +232,56 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
       if (mounted) {
         setState(() {
           _isWatchedLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleWatchlist() async {
+    if (_isWatchlistLoading || _movieDetails == null) return;
+
+    setState(() {
+      _isWatchlistLoading = true;
+    });
+
+    try {
+      bool success = await _watchlistService.toggleWatchlist(
+        itemId: widget.movieId,
+        mediaType: MediaType.movie,
+        title: _movieDetails!['title'],
+        posterPath: _movieDetails!['poster_path'],
+        addToWatchlist: !_isInWatchlist,
+      );
+
+      if (mounted && success) {
+        setState(() {
+          _isInWatchlist = !_isInWatchlist;
+          _isWatchlistLoading = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isInWatchlist
+                  ? 'Ajouté à la watchlist'
+                  : 'Retiré de la watchlist',
+            ),
+            duration: const Duration(seconds: 2),
+            backgroundColor: const Color(0xFF16232E),
+          ),
+        );
+      } else if (mounted) {
+        setState(() {
+          _isWatchlistLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isWatchlistLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
@@ -338,6 +410,66 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF16232E),
+      // Ajout des boutons flottants pour watchlist et vu
+      floatingActionButton:
+          _movieDetails == null
+              ? null
+              : Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Bouton pour ajouter à la watchlist
+                    FloatingActionButton(
+                      heroTag: 'watchlist',
+                      onPressed: _toggleWatchlist,
+                      backgroundColor: const Color(0xFF1D2F3E),
+                      shape: const CircleBorder(),
+                      child:
+                          _isWatchlistLoading
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFF8C13A),
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : Icon(
+                                _isInWatchlist ? Icons.check : Icons.add,
+                                color: const Color(0xFFF8C13A),
+                                size: 30,
+                              ),
+                    ),
+                    const SizedBox(width: 20),
+                    // Bouton pour marquer comme vu/favoris
+                    FloatingActionButton(
+                      heroTag: 'favorite',
+                      onPressed: _toggleFavorite,
+                      backgroundColor: const Color(0xFFF8C13A),
+                      shape: const CircleBorder(),
+                      child:
+                          _isFavoriteLoading
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.black,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                              : Icon(
+                                _isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: _isFavorite ? Colors.red : Colors.black,
+                                size: 30,
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body:
           _isLoading
               ? const Center(

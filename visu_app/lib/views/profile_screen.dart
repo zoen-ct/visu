@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '/visu.dart';
 
@@ -129,6 +132,163 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
+  // Afficher la boîte de dialogue pour modifier le profil utilisateur
+  void _showEditProfileDialog() {
+    final TextEditingController usernameController = TextEditingController(
+      text:
+          _userInfo != null && _userInfo!['username'] != null
+              ? _userInfo!['username']
+              : '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1D2F3E),
+          title: const Text(
+            'Modifier mon profil',
+            style: TextStyle(color: Color(0xFFF8C13A)),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Avatar actuel
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: const Color(0xFFF8C13A),
+                  backgroundImage:
+                      _userInfo != null && _userInfo!['avatar_url'] != null
+                          ? NetworkImage(_userInfo!['avatar_url'])
+                          : null,
+                  child:
+                      _userInfo != null && _userInfo!['avatar_url'] != null
+                          ? null
+                          : const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: Color(0xFF16232E),
+                          ),
+                ),
+                const SizedBox(height: 16),
+
+                // Message sur l'upload d'avatar
+                const Text(
+                  "La fonctionnalité d'upload d'avatar sera disponible dans une version future",
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 16),
+
+                TextField(
+                  controller: usernameController,
+                  style: const TextStyle(color: Color(0xFFF4F6F8)),
+                  decoration: const InputDecoration(
+                    labelText: 'Nom d\'utilisateur',
+                    labelStyle: TextStyle(color: Color(0xFFF8C13A)),
+                    hintText: 'Entrez votre nom d\'utilisateur',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Color(0xFFF8C13A)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey),
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Afficher un indicateur de chargement
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    return const AlertDialog(
+                      backgroundColor: Color(0xFF1D2F3E),
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFFF8C13A),
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Mise à jour du profil...',
+                            style: TextStyle(color: Color(0xFFF4F6F8)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  // Mettre à jour le nom d'utilisateur uniquement
+                  final newUsername = usernameController.text.trim();
+                  final success = await _userProfileService.updateUsername(
+                    newUsername.isNotEmpty ? newUsername : 'Visueur',
+                  );
+
+                  // Rafraîchir les données utilisateur
+                  if (success) {
+                    await _loadUserData();
+                  }
+
+                  // Fermer le dialogue de chargement
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                    // Fermer le dialogue d'édition
+                    Navigator.of(context).pop();
+
+                    // Afficher un message de succès
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Profil mis à jour avec succès'),
+                        backgroundColor: Color(0xFF16232E),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  // Gérer les erreurs
+                  if (context.mounted) {
+                    Navigator.of(
+                      context,
+                    ).pop(); // Fermer le dialogue de chargement
+                    Navigator.of(context).pop(); // Fermer le dialogue d'édition
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFF8C13A),
+              ),
+              child: const Text('Enregistrer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,11 +375,11 @@ class _ProfileScreenState extends State<ProfileScreen>
             radius: 50,
             backgroundColor: const Color(0xFFF8C13A),
             backgroundImage:
-                _userInfo != null && _userInfo!['profilePicture'] != null
-                    ? NetworkImage(_userInfo!['profilePicture'])
+                _userInfo != null && _userInfo!['avatar_url'] != null
+                    ? NetworkImage(_userInfo!['avatar_url'])
                     : null,
             child:
-                _userInfo != null && _userInfo!['profilePicture'] != null
+                _userInfo != null && _userInfo!['avatar_url'] != null
                     ? null
                     : const Icon(
                       Icons.person,
@@ -229,7 +389,9 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 20),
           Text(
-            _userInfo != null ? _userInfo!['name'] : 'Utilisateur Vizu',
+            _userInfo != null && _userInfo!['username'] != null
+                ? _userInfo!['username']
+                : 'Visueur',
             style: const TextStyle(
               color: Color(0xFFF4F6F8),
               fontSize: 24,
@@ -240,6 +402,20 @@ class _ProfileScreenState extends State<ProfileScreen>
           Text(
             _userInfo != null ? _userInfo!['email'] : 'utilisateur@vizu.com',
             style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.edit),
+            label: const Text('Modifier mon profil'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1D2F3E),
+              foregroundColor: const Color(0xFFF8C13A),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            onPressed: () {
+              // Naviguer vers une page d'édition de profil
+              _showEditProfileDialog();
+            },
           ),
 
           const SizedBox(height: 32),

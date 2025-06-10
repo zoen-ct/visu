@@ -1,6 +1,5 @@
 export 'auth/index.dart';
 export 'episode_detail_screen.dart';
-export 'home_screen.dart';
 export 'main_screen.dart';
 export 'movie_detail_screen.dart';
 export 'movies_screen.dart';

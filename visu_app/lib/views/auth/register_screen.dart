@@ -12,7 +12,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -24,7 +23,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -52,7 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final response = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        userData: {'name': _nameController.text.trim()},
+        userData: {}, // Suppression des données de nom
       );
 
       if (mounted) {
@@ -120,20 +118,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 14),
                 ),
                 const SizedBox(height: 24),
-
-                VisuTextField(
-                  label: 'Nom complet',
-                  controller: _nameController,
-                  prefixIcon: Icons.person,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre nom';
-                    }
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 16),
 
                 VisuTextField(
                   label: 'Email',
