@@ -1,5 +1,3 @@
-import '/visu.dart';
-
 enum MediaType { movie, tv, person, unknown }
 
 class SearchResult {
@@ -97,7 +95,6 @@ class SearchResult {
     if (posterPath.isEmpty) {
       return 'https://via.placeholder.com/500x750?text=No+Image';
     }
-    // Construction directe de l'URL pour garantir que le format est correct
     final String cleanPath =
         posterPath.startsWith('/') ? posterPath : '/$posterPath';
     return 'https://image.tmdb.org/t/p/w500$cleanPath';

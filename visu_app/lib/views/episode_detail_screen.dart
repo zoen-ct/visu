@@ -170,7 +170,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image de l'épisode
+            // Episode image
           if (episode.stillPath.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
@@ -204,7 +204,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
             ),
           const SizedBox(height: 16),
 
-          // Numéro et titre de l'épisode
+            // Episode number and title
           Text(
             'S${widget.seasonNumber.toString().padLeft(2, '0')}E${episode.episodeNumber.toString().padLeft(2, '0')} - ${episode.name}',
             style: const TextStyle(
@@ -215,7 +215,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Date de diffusion
+            // Air date
           Row(
             children: [
               const Icon(Icons.calendar_today, color: Colors.white70, size: 16),
@@ -227,7 +227,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
             ],
           ),
 
-          // Durée de l'épisode
+            // Episode duration
           if (episode.runtime > 0) ...[
             const SizedBox(height: 4),
             Row(
@@ -242,7 +242,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
             ),
           ],
 
-          // Note
+            // Rating
           const SizedBox(height: 4),
           Row(
             children: [
@@ -257,7 +257,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
 
           const SizedBox(height: 16),
 
-          // Bouton pour marquer comme vu
+            // Button to mark as watched
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -279,7 +279,7 @@ class _EpisodeDetailScreenState extends State<EpisodeDetailScreen> {
 
           const SizedBox(height: 24),
 
-          // Synopsis
+            // Overview
           const Text(
             'Synopsis',
             style: TextStyle(

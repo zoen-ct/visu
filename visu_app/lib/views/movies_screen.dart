@@ -36,7 +36,6 @@ class _MoviesScreenState extends State<MoviesScreen> {
         MediaType.movie,
       );
 
-      // Récupérer l'historique des films vus
       final historyItems = await _historyService.getHistory();
       final Set<int> watchedMovieIds =
           historyItems
@@ -49,7 +48,6 @@ class _MoviesScreenState extends State<MoviesScreen> {
         try {
           final int movieId = item['item_id'];
 
-          // Ignorer les films qui ont déjà été vus
           if (watchedMovieIds.contains(movieId)) {
             continue;
           }
@@ -95,79 +93,30 @@ class _MoviesScreenState extends State<MoviesScreen> {
     context.push('/movies/detail/${movie.id}');
   }
 
+  void _navigateToSearch() {
+    context.push('/search');
+  }
+
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFFF8C13A)),
-      );
+      return const LoadingIndicator();
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              _errorMessage!,
-              style: const TextStyle(color: Color(0xFFF4F6F8), fontSize: 16),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadWatchlistMovies,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF8C13A),
-                foregroundColor: const Color(0xFF16232E),
-              ),
-              child: const Text('Réessayer'),
-            ),
-          ],
-        ),
+      return ErrorDisplay(
+        message: _errorMessage!,
+        onRetry: _loadWatchlistMovies,
       );
     }
 
     if (_watchlistMovies == null || _watchlistMovies!.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.movie_outlined,
-              color: Color(0xFFF8C13A),
-              size: 64,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Votre watchlist de films est vide',
-              style: TextStyle(color: Color(0xFFF4F6F8), fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Recherchez des films pour les ajouter à votre liste',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/search'),
-              icon: const Icon(Icons.search),
-              label: const Text('Chercher des films'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFF8C13A),
-                foregroundColor: const Color(0xFF16232E),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ],
-        ),
+      return EmptyStateView(
+        title: 'Votre watchlist de films est vide',
+        subtitle: 'Recherchez des films pour les ajouter à votre liste',
+        icon: Icons.movie_outlined,
+        actionLabel: 'Chercher des films',
+        actionIcon: Icons.search,
+        onAction: _navigateToSearch,
       );
     }
 
@@ -176,10 +125,9 @@ class _MoviesScreenState extends State<MoviesScreen> {
       color: const Color(0xFFF8C13A),
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        itemCount: _watchlistMovies!.length + 1, // +1 pour la marge en bas
+        itemCount: _watchlistMovies!.length + 1, // +1 for bottom margin
         itemBuilder: (context, index) {
           if (index == _watchlistMovies!.length) {
-            // Ajouter une marge en bas pour permettre un meilleur défilement
             return const SizedBox(height: 100);
           }
           final movie = _watchlistMovies![index];
@@ -198,7 +146,6 @@ class _MoviesScreenState extends State<MoviesScreen> {
       backgroundColor: const Color(0xFF16232E),
       appBar: AppBar(
         backgroundColor: const Color(0xFF16232E),
-        // Ajouter ces propriétés pour maintenir la couleur pendant le scroll
         surfaceTintColor: Colors.transparent,
         scrolledUnderElevation: 0,
         title: const Text(

@@ -49,16 +49,13 @@ class SupabaseAuthService {
       final response = await supabase.auth.signUp(
         email: email,
         password: password,
-        data: userData ?? {}, // Données utilisateur minimales
+        data: userData ?? {},
       );
 
       if (response.user != null) {
-        // Attendre un peu pour s'assurer que l'utilisateur est bien créé dans la base de données
         await Future.delayed(const Duration(milliseconds: 500));
 
         try {
-          // Créer un profil utilisateur basique avec juste l'ID
-          // Les autres champs seront null jusqu'à ce que l'utilisateur les définisse
           await supabase.from(SupabaseConfig.userProfileTable).insert({
             'id': response.user!.id,
             'email': email,
@@ -69,7 +66,6 @@ class SupabaseAuthService {
             'Erreur lors de la création du profil utilisateur',
             profileError,
           );
-          // On continue malgré l'erreur - le profil pourra être créé plus tard
         }
       }
 
@@ -101,10 +97,9 @@ class SupabaseAuthService {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) {
-        return "Visueur"; // Utilisateur non connecté
+        return "Visueur";
       }
 
-      // Tenter d'obtenir le nom d'utilisateur depuis la table de profil
       final data =
           await supabase
               .from(SupabaseConfig.userProfileTable)
@@ -112,7 +107,7 @@ class SupabaseAuthService {
               .eq('id', user.id)
               .maybeSingle();
 
-      // Le nom d'utilisateur est maintenant toujours défini, mais on vérifie quand même
+
       return (data != null && data['username'] != null)
           ? data['username']
           : "Visueur";
@@ -121,7 +116,7 @@ class SupabaseAuthService {
         'Erreur lors de la récupération du nom d\'utilisateur',
         e,
       );
-      return "Visueur"; // En cas d'erreur, utiliser le nom par défaut
+      return "Visueur";
     }
   }
 
@@ -151,20 +146,16 @@ class SupabaseAuthService {
 
   Future<void> deleteAccount() async {
     try {
-      // Obtenir l'utilisateur actuel
       final user = supabase.auth.currentUser;
       if (user == null) {
         throw Exception('Aucun utilisateur connecté');
       }
 
-      // Supprimer les données de l'utilisateur de la table user_profiles
       await supabase
           .from(SupabaseConfig.userProfileTable)
           .delete()
           .eq('id', user.id);
 
-      // Utiliser une solution alternative à admin.deleteUser
-      // Mettre à jour les métadonnées de l'utilisateur pour indiquer que le compte est supprimé
       await supabase.auth.updateUser(
         UserAttributes(
           data: {
@@ -174,7 +165,6 @@ class SupabaseAuthService {
         ),
       );
 
-      // Déconnecter l'utilisateur
       await signOut();
     } catch (e) {
       SupabaseConfig.logError('Erreur lors de la suppression du compte', e);

@@ -264,7 +264,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _showDeleteAccountDialog(BuildContext context) async {
     final TextEditingController emailController = TextEditingController();
-    // Capturer le BuildContext du Scaffold parent avant de montrer la boîte de dialogue
+
     final scaffoldContext = context;
 
     showDialog(
@@ -324,25 +324,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (currentUser != null &&
                       emailController.text.trim() == currentUser.email) {
                     try {
-                      // Fermer d'abord la boîte de dialogue avec le contexte correct
                       Navigator.of(dialogContext).pop();
 
-                      // Puis mettre à jour l'état de chargement
                       setState(() => _isLoading = true);
 
-                      // Essayer de supprimer le compte
                       await _authService.deleteAccount();
 
-                      // Après la suppression réussie, naviguer directement vers l'écran de connexion
                       if (mounted) {
                         GoRouter.of(scaffoldContext).go('/login');
                       }
                     } catch (e) {
-                      // Vérifier si le widget est toujours monté avant de mettre à jour l'état
                       if (mounted) {
                         setState(() => _isLoading = false);
 
-                        // Utiliser le contexte du Scaffold capturé pour afficher le SnackBar
                         ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                           SnackBar(
                             content: Text('Erreur: $e'),
@@ -352,10 +346,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                     }
                   } else {
-                    // Fermer d'abord la boîte de dialogue
                     Navigator.of(dialogContext).pop();
 
-                    // Puis afficher le SnackBar avec le contexte du Scaffold parent
                     ScaffoldMessenger.of(scaffoldContext).showSnackBar(
                       const SnackBar(
                         content: Text('L\'adresse email ne correspond pas'),

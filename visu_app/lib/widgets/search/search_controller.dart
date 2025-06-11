@@ -52,10 +52,8 @@ class SearchController extends ChangeNotifier {
     onStateChanged();
 
     try {
-      // Charger les séries tendances
       final series = await _tmdbService.getTrendingSeries();
 
-      // Charger les films tendances
       final movies = await _tmdbService.getTrendingMovies();
 
       trendingSeries = series;

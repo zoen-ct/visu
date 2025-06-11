@@ -1,122 +1,99 @@
 import 'package:flutter/material.dart';
 
+/// Widget de champ de texte personnalisé pour l'application Visu
 class VisuTextField extends StatefulWidget {
   const VisuTextField({
     super.key,
     required this.label,
     required this.controller,
     this.obscureText = false,
-    this.validator,
     this.keyboardType = TextInputType.text,
     this.prefixIcon,
+    this.validator,
+    this.onChanged,
+    this.hintText,
   });
 
   final String label;
   final TextEditingController controller;
   final bool obscureText;
-  final String? Function(String?)? validator;
   final TextInputType keyboardType;
   final IconData? prefixIcon;
+  final String? Function(String?)? validator;
+  final Function(String)? onChanged;
+  final String? hintText;
 
   @override
   State<VisuTextField> createState() => _VisuTextFieldState();
 }
 
 class _VisuTextFieldState extends State<VisuTextField> {
-  final FocusNode _focusNode = FocusNode();
-  bool _hasFocus = false;
-  bool _hasError = false;
-  bool _hasText = false;
+  bool _obscureText = true;
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(_onFocusChange);
-    widget.controller.addListener(_onTextChange);
-    _hasText = widget.controller.text.isNotEmpty;
-  }
-
-  void _onFocusChange() {
-    setState(() {
-      _hasFocus = _focusNode.hasFocus;
-    });
-  }
-
-  void _onTextChange() {
-    setState(() {
-      _hasText = widget.controller.text.isNotEmpty;
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    widget.controller.removeListener(_onTextChange);
-    _focusNode.dispose();
-    super.dispose();
+    _obscureText = widget.obscureText;
   }
 
   @override
   Widget build(BuildContext context) {
-    Color labelColor;
-    if (_hasError) {
-      labelColor = Colors.red;
-    } else if (_hasFocus || _hasText) {
-      labelColor = const Color(
-        0xFFF8C13A,
-      );
-    } else {
-      labelColor = const Color(0xFF16232E);
-    }
-
-    return TextFormField(
-      controller: widget.controller,
-      obscureText: widget.obscureText,
-      keyboardType: widget.keyboardType,
-      focusNode: _focusNode,
-      validator: (value) {
-        final error = widget.validator?.call(value);
-        setState(() {
-          _hasError = error != null;
-        });
-        return error;
-      },
-      style: const TextStyle(
-        color: Color(0xFF16232E),
-        fontSize: 16,
-        fontFamily: 'Roboto',
-      ),
-      decoration: InputDecoration(
-        labelText: widget.label,
-        labelStyle: TextStyle(color: labelColor, fontSize: 14),
-        floatingLabelStyle: TextStyle(color: labelColor, fontSize: 14),
-        prefixIcon:
-            widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, size: 20, color: labelColor)
-                : null,
-        filled: true,
-        fillColor: const Color(0xFFF4F6F8),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(
+            color: Color(0xFFF8C13A),
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFF8C13A), width: 2),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: widget.controller,
+          obscureText: widget.obscureText ? _obscureText : false,
+          keyboardType: widget.keyboardType,
+          style: const TextStyle(color: Color(0xFFF4F6F8)),
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            hintStyle: TextStyle(
+              color: const Color(0xFFF4F6F8).withOpacity(0.5),
+            ),
+            filled: true,
+            fillColor: const Color(0xFF1D2F3E),
+            prefixIcon:
+                widget.prefixIcon != null
+                    ? Icon(widget.prefixIcon, color: const Color(0xFFF8C13A))
+                    : null,
+            suffixIcon:
+                widget.obscureText
+                    ? IconButton(
+                      icon: Icon(
+                        _obscureText ? Icons.visibility_off : Icons.visibility,
+                        color: const Color(0xFFF8C13A),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureText = !_obscureText;
+                        });
+                      },
+                    )
+                    : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+            errorStyle: const TextStyle(color: Colors.red),
+          ),
+          validator: widget.validator,
+          onChanged: widget.onChanged,
         ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 1),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-      ),
+      ],
     );
   }
 }

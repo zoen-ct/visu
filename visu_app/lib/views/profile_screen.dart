@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 import '/visu.dart';
 
@@ -21,7 +18,6 @@ class _ProfileScreenState extends State<ProfileScreen>
   final SupabaseFavoritesService _favoritesService = SupabaseFavoritesService();
   final SupabaseHistoryService _historyService = SupabaseHistoryService();
   final SupabaseAuthService _authService = SupabaseAuthService();
-  final TMDbService _tmdbService = TMDbService();
 
   late TabController _tabController;
   bool _isLoading = true;
@@ -29,11 +25,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   Map<String, dynamic> _userStats = {};
   List<SearchResult> _favorites = [];
   List<SearchResult> _watchHistory = [];
-  // Ajouter un Map pour stocker les données brutes de l'historique
   List<Map<String, dynamic>> _historyRawData = [];
   String? _errorMessage;
-  // Indicateur de chargement pour le bouton de suppression
-  Map<int, bool> _isRemovingFromHistory = {};
+  final Map<int, bool> _isRemovingFromHistory = {};
 
   @override
   void initState() {
@@ -55,19 +49,14 @@ class _ProfileScreenState extends State<ProfileScreen>
         _errorMessage = null;
       });
 
-      // Récupérer les informations du profil utilisateur
       final userProfile = await _userProfileService.getUserProfile();
 
-      // Récupérer les favoris
       final favorites = await _favoritesService.getFavorites();
 
-      // Récupérer l'historique
       final watchHistory = await _historyService.getHistory();
 
-      // Sauvegarder les données brutes de l'historique
       _historyRawData = watchHistory;
 
-      // Calculer les statistiques de l'utilisateur
       final Map<String, dynamic> userStats = {
         'totalWatchedMovies':
             watchHistory
@@ -79,11 +68,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 .length,
         'totalFavorites': favorites.length,
         'totalWatchTimeHours':
-            (watchHistory.length * 1.5)
-                .round(), // Estimation de 1.5h par élément regardé
+            (watchHistory.length * 1.5).round(),
       };
 
-      // Convertir les favoris en objets SearchResult
       final List<SearchResult> favoriteResults =
           favorites.map((favorite) {
             return SearchResult(
@@ -98,7 +85,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             );
           }).toList();
 
-      // Convertir l'historique en objets SearchResult
       final List<SearchResult> historyResults =
           watchHistory.map((item) {
             return SearchResult(
@@ -110,7 +96,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               posterPath: item['poster_path'],
               releaseDate: '',
               voteAverage: 0,
-              // Stocker les numéros de saison et d'épisode si présents
               seasonNumber: item['season_number'],
               episodeNumber: item['episode_number'],
             );
@@ -143,7 +128,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
-  // Afficher la boîte de dialogue pour modifier le profil utilisateur
   void _showEditProfileDialog() {
     final TextEditingController usernameController = TextEditingController(
       text:
@@ -165,7 +149,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Avatar actuel
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: const Color(0xFFF8C13A),
@@ -184,7 +167,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
                 const SizedBox(height: 16),
 
-                // Message sur l'upload d'avatar
                 const Text(
                   "La fonctionnalité d'upload d'avatar sera disponible dans une version future",
                   style: TextStyle(color: Colors.grey, fontSize: 12),
@@ -220,7 +202,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
             TextButton(
               onPressed: () async {
-                // Afficher un indicateur de chargement
                 showDialog(
                   context: context,
                   barrierDismissible: false,
@@ -247,24 +228,19 @@ class _ProfileScreenState extends State<ProfileScreen>
                 );
 
                 try {
-                  // Mettre à jour le nom d'utilisateur uniquement
                   final newUsername = usernameController.text.trim();
                   final success = await _userProfileService.updateUsername(
                     newUsername.isNotEmpty ? newUsername : 'Visueur',
                   );
 
-                  // Rafraîchir les données utilisateur
                   if (success) {
                     await _loadUserData();
                   }
 
-                  // Fermer le dialogue de chargement
                   if (context.mounted) {
                     Navigator.of(context).pop();
-                    // Fermer le dialogue d'édition
                     Navigator.of(context).pop();
 
-                    // Afficher un message de succès
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Profil mis à jour avec succès'),
@@ -273,12 +249,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                     );
                   }
                 } catch (e) {
-                  // Gérer les erreurs
                   if (context.mounted) {
                     Navigator.of(
                       context,
-                    ).pop(); // Fermer le dialogue de chargement
-                    Navigator.of(context).pop(); // Fermer le dialogue d'édition
+                    ).pop();
+                    Navigator.of(context).pop();
 
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -300,16 +275,13 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // Méthode pour retirer un épisode de l'historique
   Future<void> _removeFromHistory(
     SearchResult media, {
     int? seasonNumber,
     int? episodeNumber,
   }) async {
-    // Vérifier que l'élément existe dans l'historique
     final mediaId = media.id;
 
-    // Activer l'indicateur de chargement pour ce média
     setState(() {
       _isRemovingFromHistory[mediaId] = true;
     });
@@ -319,7 +291,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       if (media.mediaType == MediaType.tv &&
           seasonNumber != null &&
           episodeNumber != null) {
-        // Retirer un épisode spécifique
         success = await _historyService.markAsWatched(
           itemId: mediaId,
           mediaType: MediaType.tv,
@@ -328,7 +299,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           watched: false,
         );
       } else {
-        // Retirer un film
         success = await _historyService.markAsWatched(
           itemId: mediaId,
           mediaType: media.mediaType,
@@ -337,16 +307,14 @@ class _ProfileScreenState extends State<ProfileScreen>
       }
 
       if (success) {
-        // Recharger les données
         await _loadUserData();
 
-        // Afficher un message de confirmation
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+            const SnackBar(
               content: Text('Retiré de l\'historique'),
-              backgroundColor: const Color(0xFF16232E),
-              duration: const Duration(seconds: 2),
+              backgroundColor: Color(0xFF16232E),
+              duration: Duration(seconds: 2),
             ),
           );
         }
@@ -358,7 +326,6 @@ class _ProfileScreenState extends State<ProfileScreen>
         );
       }
     } finally {
-      // Désactiver l'indicateur de chargement
       if (mounted) {
         setState(() {
           _isRemovingFromHistory[mediaId] = false;
@@ -367,7 +334,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
-  // Widget pour afficher un épisode dans l'historique
   Widget _buildEpisodeCard(SearchResult media) {
     final seasonNumber = media.seasonNumber;
     final episodeNumber = media.episodeNumber;
@@ -394,7 +360,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Image de la série
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: CachedNetworkImage(
@@ -426,13 +391,11 @@ class _ProfileScreenState extends State<ProfileScreen>
 
               const SizedBox(width: 12),
 
-              // Informations sur la série et l'épisode
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Titre de la série
                     Text(
                       media.title,
                       style: const TextStyle(
@@ -446,7 +409,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                     const SizedBox(height: 4),
 
-                    // Numéro de saison et d'épisode
                     Text(
                       'S${seasonNumber?.toString().padLeft(2, '0') ?? '??'} | E${episodeNumber?.toString().padLeft(2, '0') ?? '??'}',
                       style: const TextStyle(
@@ -458,7 +420,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                     const SizedBox(height: 4),
 
-                    // Description de l'épisode (à récupérer de l'API si disponible)
                     Text(
                       episodeData['overview'] ?? 'Épisode visionné',
                       style: const TextStyle(
@@ -472,12 +433,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
               ),
 
-              // Bouton pour retirer de l'historique
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8C13A),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8C13A),
                   shape: BoxShape.circle,
                 ),
                 child:
@@ -594,7 +554,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          // Avatar and user info
           CircleAvatar(
             radius: 50,
             backgroundColor: const Color(0xFFF8C13A),
@@ -637,7 +596,6 @@ class _ProfileScreenState extends State<ProfileScreen>
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             onPressed: () {
-              // Naviguer vers une page d'édition de profil
               _showEditProfileDialog();
             },
           ),
@@ -774,14 +732,12 @@ class _ProfileScreenState extends State<ProfileScreen>
       itemBuilder: (context, index) {
         final item = _watchHistory[index];
 
-        // Utiliser le widget d'épisode pour les séries avec saison et épisode
         if (item.mediaType == MediaType.tv &&
             item.seasonNumber != null &&
             item.episodeNumber != null) {
           return _buildEpisodeCard(item);
         }
 
-        // Utiliser le widget standard pour les films
         return _buildMediaCard(item);
       },
     );
@@ -805,7 +761,6 @@ class _ProfileScreenState extends State<ProfileScreen>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image d'affiche
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(12),
@@ -843,14 +798,12 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ),
 
-            // Content
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Titre
                     Text(
                       media.title,
                       style: const TextStyle(
@@ -864,7 +817,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                     const SizedBox(height: 4),
 
-                    // Type et année
                     Row(
                       children: [
                         Container(
@@ -901,7 +853,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                     const SizedBox(height: 8),
 
-                    // Description (extrait)
                     Text(
                       movieData['overview'] ?? 'Film visionné',
                       style: const TextStyle(
@@ -914,7 +865,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                     const SizedBox(height: 4),
 
-                    // Note moyenne
                     if (media.voteAverage > 0) ...[
                       Row(
                         children: [
@@ -939,14 +889,13 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ),
 
-            // Bouton pour retirer de l'historique
             Padding(
               padding: const EdgeInsets.only(right: 8, top: 8),
               child: Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8C13A),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF8C13A),
                   shape: BoxShape.circle,
                 ),
                 child:
@@ -1014,7 +963,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           size: 16,
         ),
         onTap: () {
-          // Implement navigation to the corresponding pages
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Navigation vers $text à implémenter'),

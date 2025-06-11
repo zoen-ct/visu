@@ -16,9 +16,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
   final SupabaseHistoryService _historyService = SupabaseHistoryService();
   final TMDbService _tmdbService = TMDbService();
 
-  List<SerieWithFirstEpisode>?
-  _watchlistSeries; // Séries non commencées avec infos du premier épisode
-  List<SerieWithProgress>? _inProgressSeries; // Séries en cours
+  List<SerieWithFirstEpisode>? _watchlistSeries;
+  List<SerieWithProgress>? _inProgressSeries;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -35,17 +34,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
         _errorMessage = null;
       });
 
-      // Récupérer toutes les séries dans la watchlist
       final allWatchlistSeries = await _serieService.getWatchlist();
 
-      // Récupérer l'historique des épisodes vus
       final watchHistory = await _historyService.getHistoryByType(MediaType.tv);
 
-      // Debug: Afficher l'historique pour vérifier s'il contient des données
       debugPrint(
         'Nombre d\'entrées dans l\'historique: ${watchHistory.length}',
       );
-      for (var item in watchHistory) {
+      for (final item in watchHistory) {
         debugPrint(
           'Historique: série ${item['item_id']}, saison ${item['season_number']}, épisode ${item['episode_number']}',
         );
@@ -55,7 +51,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
       final List<SerieWithFirstEpisode> notStartedSeries = [];
       final Map<int, List<Map<String, dynamic>>> watchedEpisodesBySerieId = {};
 
-      // Organiser les épisodes vus par série
       for (final item in watchHistory) {
         if (item['item_id'] != null &&
             item['season_number'] != null &&
@@ -68,17 +63,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
         }
       }
 
-      // Debug: Afficher les séries qui ont des épisodes vus
-      for (var serieId in watchedEpisodesBySerieId.keys) {
+      for (final serieId in watchedEpisodesBySerieId.keys) {
         debugPrint(
           'Série $serieId a ${watchedEpisodesBySerieId[serieId]!.length} épisodes vus',
         );
       }
 
-      // Trier les séries entre "en cours" et "non commencées"
       for (final serie in allWatchlistSeries) {
         debugPrint('Traitement de la série ${serie.id} (${serie.title})');
-        // Vérifier si cette série est dans l'historique (au moins un épisode vu)
         final serieHistory = watchedEpisodesBySerieId[serie.id] ?? [];
 
         debugPrint(
@@ -87,7 +79,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
         if (serieHistory.isNotEmpty) {
           debugPrint('Série ${serie.id} est EN COURS');
-          // Trouver le dernier épisode vu (le plus récent)
           serieHistory.sort((a, b) {
             final aSeasonNum = a['season_number'] as int;
             final bSeasonNum = b['season_number'] as int;
@@ -102,7 +93,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
           final lastSeasonNumber = lastWatched['season_number'] as int;
           final lastEpisodeNumber = lastWatched['episode_number'] as int;
 
-          // Récupérer les détails de la saison pour connaître le prochain épisode
           try {
             final seasonDetails = await _tmdbService.getSeasonDetails(
               serie.id,
@@ -110,15 +100,12 @@ class _SeriesScreenState extends State<SeriesScreen> {
             );
 
             final episodes = seasonDetails['episodes'] as List<dynamic>;
-            int nextEpisodeNumber = lastEpisodeNumber + 1;
+            final int nextEpisodeNumber = lastEpisodeNumber + 1;
 
-            // Calculer la progression totale
-            int totalWatchedEpisodes = serieHistory.length;
-            int totalEpisodesInSeason = episodes.length;
+            final int totalWatchedEpisodes = serieHistory.length;
+            final int totalEpisodesInSeason = episodes.length;
 
-            // Vérifier si le prochain épisode existe dans cette saison
             if (nextEpisodeNumber <= episodes.length) {
-              // Récupérer les infos du prochain épisode
               final nextEpisode = episodes.firstWhere(
                 (e) => e['episode_number'] == nextEpisodeNumber,
                 orElse: () => null,
@@ -135,11 +122,11 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     nextEpisodeDetails: nextEpisode,
                   ),
                 );
-                continue; // Passer à la série suivante
+                continue;
               }
             }
 
-            // Si on arrive ici, il faut vérifier la saison suivante
+            // If we reach here, we need to check the next season
             try {
               final nextSeasonNumber = lastSeasonNumber + 1;
               final nextSeasonDetails = await _tmdbService.getSeasonDetails(
@@ -161,10 +148,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     nextEpisodeDetails: nextEpisode,
                   ),
                 );
-                continue; // Passer à la série suivante
+                continue;
               }
             } catch (e) {
-              // Pas de saison suivante, on considère la série comme terminée
               inProgressSeries.add(
                 SerieWithProgress(
                   serie: serie,
@@ -179,16 +165,13 @@ class _SeriesScreenState extends State<SeriesScreen> {
               continue;
             }
           } catch (e) {
-            // Erreur lors de la récupération des détails de la saison
             debugPrint('Erreur pour la série ${serie.id}: $e');
           }
         } else {
-          // Aucun épisode vu, série non commencée
           try {
-            // Récupérer les détails du premier épisode
             final seasonDetails = await _tmdbService.getSeasonDetails(
               serie.id,
-              1, // Première saison
+              1,
             );
 
             final episodes = seasonDetails['episodes'] as List<dynamic>;
@@ -201,8 +184,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 ),
               );
             } else {
-              // Si pas d'épisodes disponibles, on ajoute quand même la série
-              // avec des informations minimales
               notStartedSeries.add(
                 SerieWithFirstEpisode(
                   serie: serie,
@@ -218,7 +199,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
             debugPrint(
               'Erreur lors de la récupération du premier épisode pour ${serie.id}: $e',
             );
-            // En cas d'erreur, on ajoute quand même la série avec des informations minimales
+
             notStartedSeries.add(
               SerieWithFirstEpisode(
                 serie: serie,
@@ -290,7 +271,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
       );
 
       if (success) {
-        // Recharger les données pour mettre à jour l'UI
         _loadSeries();
 
         if (mounted) {
@@ -324,13 +304,12 @@ class _SeriesScreenState extends State<SeriesScreen> {
           'https://image.tmdb.org/t/p/w500',
           '',
         ),
-        seasonNumber: 1, // Premier épisode = saison 1
-        episodeNumber: 1, // Premier épisode = épisode 1
+        seasonNumber: 1,
+        episodeNumber: 1,
         watched: true,
       );
 
       if (success) {
-        // Recharger les données pour mettre à jour l'UI
         _loadSeries();
 
         if (mounted) {
@@ -426,7 +405,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         children: [
-          // Section séries en cours
           if (hasInProgressSeries) ...[
             const Text(
               'Séries en cours',
@@ -451,7 +429,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
             const SizedBox(height: 24),
           ],
 
-          // Section séries à commencer
           if (hasWatchlistSeries) ...[
             const Text(
               'Séries à commencer',
@@ -507,16 +484,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
   }
 }
 
-// Classe pour stocker les informations sur la progression d'une série
 class SerieWithProgress {
-  final Serie serie;
-  final int currentSeason;
-  final int nextEpisode;
-  final int totalEpisodes;
-  final int watchedEpisodes;
-  final Map<String, dynamic> nextEpisodeDetails;
-  final bool isCompleted;
-
   SerieWithProgress({
     required this.serie,
     required this.currentSeason,
@@ -526,33 +494,40 @@ class SerieWithProgress {
     required this.nextEpisodeDetails,
     this.isCompleted = false,
   });
+
+  final Serie serie;
+  final int currentSeason;
+  final int nextEpisode;
+  final int totalEpisodes;
+  final int watchedEpisodes;
+  final Map<String, dynamic> nextEpisodeDetails;
+  final bool isCompleted;
 }
 
-// Classe étendue pour stocker les informations sur une série non commencée avec les détails du premier épisode
 class SerieWithFirstEpisode {
-  final Serie serie;
-  final Map<String, dynamic> firstEpisodeDetails;
-
   SerieWithFirstEpisode({
     required this.serie,
     required this.firstEpisodeDetails,
   });
+
+  final Serie serie;
+  final Map<String, dynamic> firstEpisodeDetails;
 }
 
-// Widget pour afficher une série en cours avec les détails du prochain épisode
-class SerieProgressCard extends StatelessWidget {
-  final SerieWithProgress serieProgress;
-  final VoidCallback onTapSerie;
-  final VoidCallback onTapEpisode;
-  final VoidCallback onMarkWatched;
 
+class SerieProgressCard extends StatelessWidget {
   const SerieProgressCard({
-    Key? key,
+    super.key,
     required this.serieProgress,
     required this.onTapSerie,
     required this.onTapEpisode,
     required this.onMarkWatched,
-  }) : super(key: key);
+  });
+
+  final SerieWithProgress serieProgress;
+  final VoidCallback onTapSerie;
+  final VoidCallback onTapEpisode;
+  final VoidCallback onMarkWatched;
 
   @override
   Widget build(BuildContext context) {
@@ -574,7 +549,7 @@ class SerieProgressCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Image de la série
+                // Series image
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: CachedNetworkImage(
@@ -606,13 +581,13 @@ class SerieProgressCard extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // Informations sur la série et l'épisode
+                // Series and episode information
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Titre de la série
+                    // Series title
                     Text(
                       serieProgress.serie.title,
                       style: const TextStyle(
@@ -626,10 +601,10 @@ class SerieProgressCard extends StatelessWidget {
 
                     const SizedBox(height: 4),
 
-                    // Indicateur de série terminée ou numéro de saison et épisode
+                    // Completed series indicator or season and episode number
                     serieProgress.isCompleted
                         ? const Text(
-                          "Série terminée",
+                          'Série terminée',
                           style: TextStyle(
                             color: Colors.green,
                             fontSize: 14,
@@ -648,7 +623,7 @@ class SerieProgressCard extends StatelessWidget {
                     if (!serieProgress.isCompleted) ...[
                       const SizedBox(height: 4),
 
-                      // Titre de l'épisode
+                        // Episode title
                       Text(
                         episodeTitle,
                         style: const TextStyle(
@@ -661,7 +636,7 @@ class SerieProgressCard extends StatelessWidget {
 
                       const SizedBox(height: 8),
 
-                      // Barre de progression avec texte
+                        // Progress bar with text
                       Row(
                         children: [
                           Expanded(
@@ -697,7 +672,7 @@ class SerieProgressCard extends StatelessWidget {
                 ),
               ),
 
-              // Bouton pour marquer comme vu ou icône de succès pour les séries terminées
+                // Button to mark as watched or success icon for completed series
               Container(
                 width: 40,
                 height: 40,
@@ -734,27 +709,26 @@ class SerieProgressCard extends StatelessWidget {
   }
 }
 
-// Widget pour afficher une série non commencée avec les détails du premier épisode
+// Widget to display an unwatched series with first episode details
 class SerieWithFirstEpisodeCard extends StatelessWidget {
-  final SerieWithFirstEpisode serieWithEpisode;
-  final VoidCallback onTapSerie;
-  final VoidCallback onMarkWatched;
-  final VoidCallback? onTapEpisode;
-
   const SerieWithFirstEpisodeCard({
-    Key? key,
+    super.key,
     required this.serieWithEpisode,
     required this.onTapSerie,
     required this.onMarkWatched,
     this.onTapEpisode,
-  }) : super(key: key);
+  });
+  
+  final SerieWithFirstEpisode serieWithEpisode;
+  final VoidCallback onTapSerie;
+  final VoidCallback onMarkWatched;
+  final VoidCallback? onTapEpisode;
 
   @override
   Widget build(BuildContext context) {
     final episode = serieWithEpisode.firstEpisodeDetails;
     final String episodeTitle = episode['name'] ?? 'Épisode 1';
 
-    // Utiliser l'image de la série pour l'affichage
     final String imageUrl = serieWithEpisode.serie.imageUrl;
 
     return Card(
@@ -770,7 +744,7 @@ class SerieWithFirstEpisodeCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Image de la série
+                // Series image
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: CachedNetworkImage(
@@ -802,13 +776,13 @@ class SerieWithFirstEpisodeCard extends StatelessWidget {
 
               const SizedBox(width: 12),
 
-              // Informations sur la série et l'épisode
+                // Series and episode information
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Titre de la série
+                    // Series title
                     Text(
                       serieWithEpisode.serie.title,
                       style: const TextStyle(
@@ -822,10 +796,10 @@ class SerieWithFirstEpisodeCard extends StatelessWidget {
 
                     const SizedBox(height: 4),
 
-                    // Premier épisode
-                    Text(
+                    // First episode
+                    const Text(
                       'S1 | E1',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFFF4F6F8),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -834,7 +808,7 @@ class SerieWithFirstEpisodeCard extends StatelessWidget {
 
                     const SizedBox(height: 4),
 
-                    // Titre du premier épisode
+                    // First episode title
                     Text(
                       episodeTitle,
                       style: const TextStyle(
@@ -848,12 +822,12 @@ class SerieWithFirstEpisodeCard extends StatelessWidget {
                 ),
               ),
 
-              // Bouton pour marquer comme vu
+                // Button to mark as watched
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3A4654),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF3A4654),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(

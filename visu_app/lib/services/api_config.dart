@@ -7,7 +7,7 @@ class ApiConfig {
   static String get tmdbImageBaseUrl =>
       dotenv.env['TMDB_IMAGE_BASE_URL'] ?? 'https://image.tmdb.org/t/p';
 
-  // Tailles d'images disponibles
+  // Available image sizes
   static const String posterSize = 'w500';
   static const String backdropSize = 'w1280';
   static const String profileSize = 'w185';

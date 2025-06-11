@@ -410,7 +410,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF16232E),
-      // Ajout des boutons flottants pour watchlist et vu
       floatingActionButton:
           _movieDetails == null
               ? null
@@ -419,7 +418,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Bouton pour ajouter à la watchlist
                     FloatingActionButton(
                       heroTag: 'watchlist',
                       onPressed: _toggleWatchlist,
@@ -442,7 +440,6 @@ class _MovieDetailScreenState extends State<MovieDetailScreen> {
                               ),
                     ),
                     const SizedBox(width: 20),
-                    // Bouton pour marquer comme vu/favoris
                     FloatingActionButton(
                       heroTag: 'favorite',
                       onPressed: _toggleFavorite,

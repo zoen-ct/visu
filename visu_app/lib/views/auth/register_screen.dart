@@ -50,7 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final response = await _authService.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        userData: {}, // Suppression des données de nom
+        userData: {},
       );
 
       if (mounted) {

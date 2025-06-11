@@ -51,7 +51,7 @@ class TrendingContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Séries tendances
+        // Trending series
         if (trendingSeries.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),
@@ -78,7 +78,7 @@ class TrendingContent extends StatelessWidget {
           ),
         ],
 
-        // Films tendances
+        // Trending movies
         if (trendingMovies.isNotEmpty) ...[
           const Padding(
             padding: EdgeInsets.only(left: 16, top: 16, bottom: 8),

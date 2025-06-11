@@ -2,7 +2,7 @@ import '/visu.dart';
 
 class SupabaseHistoryService {
   final SupabaseAuthService _authService = SupabaseAuthService();
-  // Utiliser la même constante que dans SupabaseWatchlistService pour cohérence
+
   static const String watchlistPrefix = "WATCHLIST_";
 
   Future<bool> isWatched({
@@ -27,7 +27,7 @@ class SupabaseHistoryService {
             'title',
             'like',
             '$watchlistPrefix%',
-          ); // Exclure les éléments de la watchlist
+          );
 
       if (mediaType == MediaType.tv &&
           seasonNumber != null &&
@@ -77,7 +77,7 @@ class SupabaseHistoryService {
               'title',
               'like',
               '$watchlistPrefix%',
-            ); // Supprimer seulement les éléments vus, pas ceux de la watchlist
+            );
 
         if (mediaType == MediaType.tv &&
             seasonNumber != null &&
@@ -146,7 +146,7 @@ class SupabaseHistoryService {
             'title',
             'like',
             '$watchlistPrefix%',
-          ) // Exclure les éléments de la watchlist
+          )
           .order('watched_at', ascending: false);
 
       return result;
@@ -177,7 +177,7 @@ class SupabaseHistoryService {
             'title',
             'like',
             '$watchlistPrefix%',
-          ) // Exclure les éléments de la watchlist
+          )
           .order('watched_at', ascending: false);
 
       return result;
@@ -205,7 +205,7 @@ class SupabaseHistoryService {
             'title',
             'like',
             '$watchlistPrefix%',
-          ); // Supprimer seulement les éléments vus, pas ceux de la watchlist
+          );
 
       if (mediaType != null) {
         await query.eq('type', mediaType.name);

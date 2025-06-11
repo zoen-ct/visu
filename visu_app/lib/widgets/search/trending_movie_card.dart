@@ -118,7 +118,7 @@ class _TrendingMovieCardState extends State<TrendingMovieCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image du film
+                // Movie image
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -160,7 +160,7 @@ class _TrendingMovieCardState extends State<TrendingMovieCard> {
                   ),
                 ),
 
-                // Titre du film
+                // Movie title
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
@@ -175,7 +175,7 @@ class _TrendingMovieCardState extends State<TrendingMovieCard> {
                   ),
                 ),
 
-                // Note du film
+                // Movie rating
                 if (rating > 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),

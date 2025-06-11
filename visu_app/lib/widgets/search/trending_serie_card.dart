@@ -123,19 +123,15 @@ class _TrendingSerieCardState extends State<TrendingSerieCard> {
 
     return GestureDetector(
       onTap: () {
-        // Navigation vers les détails de la série ou du film
         if (widget.serie is Serie ||
             (widget.serie is Map && widget.serie['first_air_date'] != null)) {
-          // C'est une série
           final int id =
               widget.serie is Serie ? widget.serie.id : widget.serie['id'];
           context.push('/series/detail/$id');
         } else if (widget.serie is Map &&
             widget.serie['release_date'] != null) {
-          // C'est un film
           context.push('/movies/detail/${widget.serie['id']}');
         } else {
-          // Fallback - utiliser la fonction onTap fournie
           widget.onTap(widget.serie);
         }
       },
@@ -147,7 +143,7 @@ class _TrendingSerieCardState extends State<TrendingSerieCard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image de la série
+                // Serie image
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
@@ -186,7 +182,7 @@ class _TrendingSerieCardState extends State<TrendingSerieCard> {
                   ),
                 ),
 
-                // Titre de la série
+                // Series title
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
@@ -201,7 +197,7 @@ class _TrendingSerieCardState extends State<TrendingSerieCard> {
                   ),
                 ),
 
-                // Note de la série
+                // Series rating
                 if (rating > 0)
                   Padding(
                     padding: const EdgeInsets.only(top: 4),
